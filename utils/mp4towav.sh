@@ -1,7 +1,7 @@
 #/bin/bash
 # usage: ./mp4towav.sh BASE_DIRECTORY
 #   where BASE_DIRECTORY is the directory housing mp4 files.
-#   output is generated in <directory>/../wav/
+#   output is generated in BASE_DIRECTORY/../wav/
 
 for file in "$1"/*.mp4
 do
