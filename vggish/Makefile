@@ -1,19 +1,21 @@
 #!/bin/bash
 
 all:
-    echo "nothing to do..."
+	echo "nothing to do..."
 
 download:
-    echo "downloading models"
-	if [ ! -f vggish_model.ckpt ]; then
-	    echo "vggish_model.ckpt not found"
-	    curl -O https://storage.googleapis.com/audioset/vggish_model.ckpt
-	if [ ! -f vggish_pca_params.npz ]; then
-	    echo "vggish_pca_params.npz not found"
+	echo "downloading models"
+	if [ ! -e "vggish_model.ckpt" ]; then \
+		echo "vggish_model.ckpt not found"
+		curl -O https://storage.googleapis.com/audioset/vggish_model.ckpt
+	fi
+	if [ ! -e "vggish_pca_params.npz" ]; then \
+		echo "vggish_pca_params.npz not found"
 		curl -O https://storage.googleapis.com/audioset/vggish_pca_params.npz
+	fi
 
 test: *.py
 	python3 vggish_smoke_test.py
 
 clean:
-	rm -f *.aux *.log *.synctex.gz *.out *.blg
+	rm -f *.ckpt *.npz
