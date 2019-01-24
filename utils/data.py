@@ -20,10 +20,11 @@ def items_gen(data, copy=False):
         break
 
 
-def broadcast(uneven_data, constant=0, copy=True):
+def make_data_even(uneven_data, constant=0, copy=True):
     '''
     appends a constant value (default: 0) to variable-length data to make it
-    evenly shaped for model training
+    evenly shaped for model training. in neural networks, recommended usage
+    is with layers that support masking
 
         uneven_data: must be a list or container with items that are ndarrays
                      shaped as (no. of samples, *features_dims)
@@ -43,8 +44,7 @@ def broadcast(uneven_data, constant=0, copy=True):
         maxlen = max(len(item) for item in uneven_data)
         dtype = uneven_data[0].dtype
     except (ValueError, IndexError) as e:
-        color.ERR()
-        print()
+        color.ERR('ERR', 'supplied data might be empty or non-standard')
 
     new_data = []
     for item in items:
