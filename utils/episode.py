@@ -106,7 +106,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
             # print(start_f, end_f)
             try:
                 this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
-                                     sr=sr, sess=utils.sess)
+                                     sess=utils.sess)
                 if preserve_length:
                     X += [this_x]
                     Y += [[1]]
@@ -116,7 +116,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
             # except (tf.errors.InvalidArgumentError, Exception) as e:
             except Exception as e:
                 color.ERR('INFO', 'encountered {}; resuming...'.format(e))
-                pass
+                raise
 
         for i, (start, end) in enumerate(nolaughs):
             if start == end: continue
@@ -124,7 +124,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
             # print(start_f, end_f)
             try:
                 this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
-                                     sr=sr, sess=utils.sess)
+                                     sess=utils.sess)
                 if preserve_length:
                     X += [this_x]
                     Y += [[0]]
@@ -134,6 +134,6 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
             # except (tf.errors.InvalidArgumentError, Exception) as e:
             except Exception as e:
                 color.ERR('INFO', 'encountered {}; resuming...'.format(e))
-                pass
+                raise
 
     return X, Y
