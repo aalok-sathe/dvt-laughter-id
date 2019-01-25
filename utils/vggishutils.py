@@ -18,7 +18,7 @@ global sess
 sess = None
 
 
-def get_embed(input_wav, sess=sess):
+def get_embed(input_wav, sr=None, sess=sess):
     '''
     accepts an input of raw wav data and produces an embedding for it treating
     the entire wav data as one sequence of audio
@@ -31,7 +31,7 @@ def get_embed(input_wav, sess=sess):
                 handled appropriately by the user
     '''
     color.INFO('INFO', 'generating input example from wav')
-    examples_batch = vggish_input.wavfile_to_examples(input_wav)
+    examples_batch = vggish_input.waveform_to_examples(input_wav, sr)
 
     # load models and postprocessor (a PCA model)
     color.INFO('INFO', 'loading vggish model checkpoint')

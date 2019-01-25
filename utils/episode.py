@@ -106,7 +106,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
             # print(start_f, end_f)
             try:
                 this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
-                                     sess=utils.sess)
+                                     sr=sr, sess=utils.sess)
                 if preserve_length:
                     X += [this_x]
                     Y += [[1]]
@@ -124,7 +124,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
             # print(start_f, end_f)
             try:
                 this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
-                                     sess=utils.sess)
+                                     sr=sr, sess=utils.sess)
                 if preserve_length:
                     X += [this_x]
                     Y += [[0]]
