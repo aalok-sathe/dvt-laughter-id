@@ -1,5 +1,5 @@
 #/bin/bash
-# usage: ./download_vggish.sh
+# usage: ./utils/download_vggish.sh
 #   run from root of the repo
 #   files are downloaded inside vggish/
 
