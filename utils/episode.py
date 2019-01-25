@@ -111,12 +111,12 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
                     X += [this_x]
                     Y += [[1]]
                 else:
-                    X += this_x
+                    X += [chunk for chunk in this_x]
                     Y += [[1] for _ in this_x]
             # except (tf.errors.InvalidArgumentError, Exception) as e:
             except Exception as e:
                 color.ERR('INFO', 'encountered {}; resuming...'.format(e))
-                raise
+                pass
 
         for i, (start, end) in enumerate(nolaughs):
             if start == end: continue
@@ -129,11 +129,11 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
                     X += [this_x]
                     Y += [[0]]
                 else:
-                    X += this_x
+                    X += [chunk for chunk in this_x]
                     Y += [[0] for _ in this_x]
             # except (tf.errors.InvalidArgumentError, Exception) as e:
             except Exception as e:
                 color.ERR('INFO', 'encountered {}; resuming...'.format(e))
-                raise
+                pass
 
     return X, Y

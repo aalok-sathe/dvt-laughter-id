@@ -35,12 +35,12 @@ def get_embed(input_wav, sr=None, sess=sess):
 
     # load models and postprocessor (a PCA model)
     color.INFO('INFO', 'loading vggish model checkpoint')
-    pproc = vggish_postprocess.Postprocessor('vggish_pca_params.npz')
+    pproc = vggish_postprocess.Postprocessor('../vggish/vggish_pca_params.npz')
     if sess == None:
         sess = tf.Session()
         tf.Graph().as_default()
         vggish_slim.define_vggish_slim(training=False)
-        vggish_slim.load_vggish_slim_checkpoint(sess, 'vggish_model.ckpt')
+        vggish_slim.load_vggish_slim_checkpoint(sess, '../vggish/vggish_model.ckpt')
     else:
         color.INFO('INFO', 'attempting to reuse tensorflow session')
 
