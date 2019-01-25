@@ -7,8 +7,9 @@ this file houses util functions specific to data processing and visualization
 import color
 # stdlib and package imports
 import numpy as np
-from matplotlib import pyplot as plt
 from sys import stderr
+from matplotlib import pyplot as plt
+from sklearn.metrics import roc_curve
 
 
 def items_gen(data, copy=False):
@@ -63,8 +64,10 @@ def make_data_even(uneven_data, constant=0, copy=True):
     return np.array(new_data, dtype=dtype)
 
 
-def plot_history(H):
-    hist = H.history
+def plot_history(H=None):
+    '''
+    plots history of training and eval for a particular model
+    '''
     try:
         plt.plot(H.history['binary_accuracy'], '.-',
                  H.history['val_binary_accuracy'], '.-')
@@ -73,10 +76,13 @@ def plot_history(H):
         plt.plot(H.history['acc'], '.-', H.history['val_acc'], '.-')
         plt.show()
     except AttributeError:
-        color.ERR('ERR', 'make sure you have passed a correct history object')
+        color.ERR('ERR', 'make sure you have passed a correct object')
 
 
 def plot_roc_curve(x, y_true, model):
+    '''
+    plots roc curve using scikitlearn's roc_curve method
+    '''
     y_pred = model.predict(x)
     fpr, tpr, thres = roc_curve(y_true=y_true, y_score=y_pred)
     plt.plot(fpr, tpr, '.-')
