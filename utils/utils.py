@@ -17,8 +17,8 @@ def export_path():
     '''
     cwd = Path.cwd()
     repo = cwd.parent
-    vggpath = repo.joinpath('vggish')
-    sys.path.append(vggpath)
+    for child in ['vggish', 'utils']:
+        sys.path.append(repo.joinpath(child))
 
 
 def import_by_path(name, path):
