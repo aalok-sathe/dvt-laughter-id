@@ -3,12 +3,13 @@
 this file houses some miscellaneous handy utils and functions
 '''
 
-
-import importlib.util
+# local imports
 import color
+# stdlib and package imports
+import importlib.util
 import sys
-
 from pathlib import Path
+
 
 def export_path():
     '''

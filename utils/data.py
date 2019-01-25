@@ -3,11 +3,13 @@
 this file houses util functions specific to data processing and visualization
 '''
 
+# local import
 import color
+# stdlib and package imports
 import numpy as np
 from matplotlib import pyplot as plt
-
 from sys import stderr
+
 
 def items_gen(data, copy=False):
     '''
