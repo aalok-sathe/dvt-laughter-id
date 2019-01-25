@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 
-import numpy as np
-import tensorflow as tf
-
-import sys
-
+# local imports
 import vggish_input
 import vggish_slim
 import vggish_postprocess
+# stdlib and package imports
+import numpy as np
+import tensorflow as tf
+import sys
+
+
+sess = None
+
 
 def get_embed(input_wav):
     print("generating examples_batch", file=sys.stderr)
