@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+import sys
+sys.path.append('../vggish/')
+
 # local imports
 import vggish_input
 import vggish_slim
@@ -8,7 +11,6 @@ import color
 # stdlib and package imports
 import numpy as np
 import tensorflow as tf
-import sys
 
 global sess
 sess = None
