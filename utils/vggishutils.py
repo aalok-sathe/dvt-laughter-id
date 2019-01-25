@@ -5,13 +5,10 @@ import vggish_input
 import vggish_slim
 import vggish_postprocess
 import color
+import utils
 # stdlib and package imports
 import numpy as np
 import tensorflow as tf
-import sys
-
-global sess
-sess = None
 
 
 def get_embed(input_wav, sess=sess):
