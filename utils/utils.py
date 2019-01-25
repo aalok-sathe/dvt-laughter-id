@@ -11,6 +11,10 @@ import sys
 from pathlib import Path
 
 
+global sess
+sess = None
+
+
 def export_path():
     '''
     adds directory with vggish-related scripts to system path
