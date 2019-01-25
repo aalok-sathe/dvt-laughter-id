@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 # local imports
+import utils
 import vggish_input
 import vggish_slim
 import vggish_postprocess
 import color
-import utils
 # stdlib and package imports
 import numpy as np
 import tensorflow as tf
