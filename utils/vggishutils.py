@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+import sys
+sys.path.append('../vggish/')
+
 # local imports
 import vggish_input
 import vggish_slim
@@ -9,6 +12,10 @@ import utils
 # stdlib and package imports
 import numpy as np
 import tensorflow as tf
+
+
+global sess
+sess = None
 
 
 def get_embed(input_wav, sess=sess):
