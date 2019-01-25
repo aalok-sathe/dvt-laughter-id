@@ -1,7 +1,11 @@
 #! /bin/env/ python3
+'''
+this file houses util functions specific to data processing and visualization
+'''
 
 import color
 import numpy as np
+from matplotlib import pyplot as plt
 
 from sys import stderr
 
@@ -55,3 +59,23 @@ def make_data_even(uneven_data, constant=0, copy=True):
         new_data.append(z)
 
     return np.array(new_data, dtype=dtype)
+
+
+def plot_history(H):
+    hist = H.history
+    try:
+        plt.plot(H.history['binary_accuracy'], '.-',
+                 H.history['val_binary_accuracy'], '.-')
+        plt.show()
+    except KeyError:
+        plt.plot(H.history['acc'], '.-', H.history['val_acc'], '.-')
+        plt.show()
+    except AttributeError:
+        color.ERR('ERR', 'make sure you have passed a correct history object')
+
+
+def plot_roc_curve(x, y_true, model):
+    y_pred = model.predict(x)
+    fpr, tpr, thres = roc_curve(y_true=y_true, y_score=y_pred)
+    plt.plot(fpr, tpr, '.-')
+    plt.show()
