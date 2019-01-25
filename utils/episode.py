@@ -78,57 +78,60 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
     ---
         which_episodes: a list of basenames (e.g. "friends-s02-e03") of
                         episodes to process (required)
+                        or the name of a single episode
         use_vggish: whether to use vggish generating data (currently no
                     alternate method is implemented, but will be in the future)
         preserve_length: whether to return data as disjoint chunks of equal
                          length, or preserve length of annotated chunks and
                          return variable-length data (defaut: False)
+
+        return: X, Y of shape (n_samples, n_features) when not preserve_length
+                              (n_samples, maxlen, n_features) when preserving
+                the number of samples in these two cases would be different
     '''
+    if type(which_episodes) is str:
+        which_episodes = [which_episodes]
+
     for ep in which_episodes:
         patches = load_annotations(ep)
         laughs = patches['laughter']
         nolaughs = [(s2-e1) for (s1, e1), (s2, e2) in zip(laughs, laughs[1:])
                     if s2-e1 > 1e3]
-        rate, wavdata = wavfile.read('wav/{}.wav'.format(episode))
-
+        sr, wavdata = wavfile.read('wav/{}.wav'.format(episode))
         X, Y = [], []
-
-        # with open('episodes/{}-dvt.jsonl'.format(episode), 'r') as infile:
-        #     fps = json.loads(infile.readline())['fps']
-        lastend = 0
 
         for i, (start, end) in enumerate(laughs):
             if start == end: continue
-            start_f, end_f = get_frame(start, fps), get_frame(end, fps)
-            start_f, end_f = round(start_f*rate/fps), round(end_f*rate/fps)
+            start_f, end_f = convertref(start, sr), convertref(end, sr)
             # print(start_f, end_f)
             try:
-                this_X, utils.sess = get_embed(input_wav=wavdata[lastend:start_f], sr=rate, sess=sess)
-                X.append(this_X)
-                y.append(0)
-            except tf.errors.InvalidArgumentError as e:
-                print("encountered {}; resuming".format(e), file=sys.stderr)
+                this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
+                                     sr=rate, sess=utils.sess)
+                if preserve_length:
+                    X += [this_x]
+                    Y += [[1]]
+                else:
+                    X += this_x
+                    Y += [[1] for _ in this_x]
+            except (tf.errors.InvalidArgumentError, Exception) as e:
+                color.ERR('INFO', 'encountered {}; resuming...'.format(e))
                 pass
-            except ValueError as e:
-                print("encountered {}; resuming".format(e), file=sys.stderr)
-                pass
-            except Exception as e:
-                print("encountered {}; resuming".format(e), file=sys.stderr)
-                pass
-            try:
-                this_X, sess = get_embed(input_wav=wavdata[start_f:end_f], sr=rate, sess=sess)
-                X.append(this_X)
-                y.append(1)
-            except tf.errors.InvalidArgumentError as e:
-                print("encountered {}; resuming".format(e), file=sys.stderr)
-                pass
-            except ValueError as e:
-                print("encountered {}; resuming".format(e), file=sys.stderr)
-                pass
-            except Exception as e:
-                print("encountered {}; resuming".format(e), file=sys.stderr)
-                pass
-            lastend = end_f
-            print("processed {} of {}".format(i, len(patches)), end='\r')
 
-    return X,y
+        for i, (start, end) in enumerate(nolaughs):
+            if start == end: continue
+            start_f, end_f = convertref(start, sr), convertref(end, sr)
+            # print(start_f, end_f)
+            try:
+                this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
+                                     sr=rate, sess=utils.sess)
+                if preserve_length:
+                    X += [this_x]
+                    Y += [[0]]
+                else:
+                    X += this_x
+                    Y += [[0] for _ in this_x]
+            except (tf.errors.InvalidArgumentError, Exception) as e:
+                color.ERR('INFO', 'encountered {}; resuming...'.format(e))
+                pass
+
+    return X, Y
