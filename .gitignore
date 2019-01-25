@@ -12,3 +12,4 @@
 *.ckpt
 *.npz
 *.npy
+.ipynb_checkpoints
