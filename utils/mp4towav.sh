@@ -1,5 +1,6 @@
 #/bin/bash
 # usage: ./mp4towav.sh BASE_DIRECTORY
+#   run from root of the repo
 #   where BASE_DIRECTORY is the directory housing mp4 files.
 #   output is generated in BASE_DIRECTORY/../wav/
 
