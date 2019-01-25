@@ -25,7 +25,7 @@ def export_path():
     for child in ['vggish', 'utils']:
         childpath = repo.joinpath(child)
         if childpath.exists():
-            sys.path.append()
+            sys.path.append(childpath)
             color.INFO('INFO', 'added "{}" to system path'.format(childpath))
         else:
             color.INFO('INFO', 'skipped "{}": did not exist'.format(childpath))
@@ -40,6 +40,3 @@ def import_by_path(name, path):
         color.ERR('ERR',
                   'module {} could not be imported from {}'.format(name, path))
         raise
-
-
-export_path()
