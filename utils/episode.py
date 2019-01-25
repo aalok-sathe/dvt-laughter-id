@@ -12,7 +12,7 @@ existence of:
 # local imports
 import color
 import utils
-import vggishutils
+from vggishutils import get_embed
 # stdlib and package imports
 import yaml
 from glob import glob
@@ -59,11 +59,11 @@ def convertref(value=None, sr=None, to='audio'):
         if to == 'audio':
             seconds = value * 1e-3
             frame = seconds * sr
-            return frame
+            return int(frame)
         else:
             seconds = value / sr
             millisec = seconds * 1e3
-            return millisec
+            return int(millisec)
     except (ValueError, TypeError) as e:
         color.ERR('ERR', 'please check your arguments')
         raise
@@ -95,9 +95,9 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
     for ep in which_episodes:
         patches = load_annotations(ep)
         laughs = patches['laughter']
-        nolaughs = [(s2-e1) for (s1, e1), (s2, e2) in zip(laughs, laughs[1:])
+        nolaughs = [(e1, s2) for (s1, e1), (s2, e2) in zip(laughs, laughs[1:])
                     if s2-e1 > 1e3]
-        sr, wavdata = wavfile.read('wav/{}.wav'.format(episode))
+        sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
         X, Y = [], []
 
         for i, (start, end) in enumerate(laughs):
@@ -106,14 +106,15 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
             # print(start_f, end_f)
             try:
                 this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
-                                     sr=rate, sess=utils.sess)
+                                     sr=sr, sess=utils.sess)
                 if preserve_length:
                     X += [this_x]
                     Y += [[1]]
                 else:
                     X += this_x
                     Y += [[1] for _ in this_x]
-            except (tf.errors.InvalidArgumentError, Exception) as e:
+            # except (tf.errors.InvalidArgumentError, Exception) as e:
+            except Exception as e:
                 color.ERR('INFO', 'encountered {}; resuming...'.format(e))
                 pass
 
@@ -123,14 +124,15 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
             # print(start_f, end_f)
             try:
                 this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
-                                     sr=rate, sess=utils.sess)
+                                     sr=sr, sess=utils.sess)
                 if preserve_length:
                     X += [this_x]
                     Y += [[0]]
                 else:
                     X += this_x
                     Y += [[0] for _ in this_x]
-            except (tf.errors.InvalidArgumentError, Exception) as e:
+            # except (tf.errors.InvalidArgumentError, Exception) as e:
+            except Exception as e:
                 color.ERR('INFO', 'encountered {}; resuming...'.format(e))
                 pass
 

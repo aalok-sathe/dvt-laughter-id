@@ -66,6 +66,6 @@ def get_embed(input_wav, sess=sess):
 
 
 # load the wave file
-if __name__ == "__main__":
-    input_wav = "/Users/taylor/local/dv/input/friends/friends-s02-e03.wav"
-    get_embed(input_wav)
+# if __name__ == "__main__":
+#     input_wav = "/Users/taylor/local/dv/input/friends/friends-s02-e03.wav"
+#     get_embed(input_wav)
