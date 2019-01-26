@@ -22,6 +22,6 @@ BOLD = "\033[;1m"
 REVERSE = "\033[;7m"
 
 def ERR(text='ERR', msg=''):
-    print(RED + '{}: '.format(text) + RESET, msg, file=stderr, end='')
+    print(RED + '{}: '.format(text) + RESET, msg, file=stderr)
 def INFO(text='INFO', msg=''):
-    print(YELLOW + '{}: '.format(text) + RESET, msg, end='')
+    print(YELLOW + '{}: '.format(text) + RESET, msg)
