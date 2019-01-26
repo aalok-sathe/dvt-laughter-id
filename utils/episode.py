@@ -18,6 +18,7 @@ import yaml
 from glob import glob
 from collections import defaultdict
 from scipy.io import wavfile
+import numpy as np
 from progressbar import progressbar
 
 
@@ -99,6 +100,8 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
 
     color.INFO('INFO', 'processing episodes {}'.format(str(which_episodes)))
 
+    X, Y, refs = [], [], []
+
     for ep in which_episodes:
         color.INFO('INFO', 'processing {}'.format(ep))
 
@@ -108,7 +111,6 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
                     if s2-e1 > 1e3]
 
         sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
-        X, Y, refs = [], [], []
 
         color.INFO('INFO', 'processing laugh data in %s' % ep)
         for start, end in progressbar(laughs, redirect_stdout=1):
@@ -120,18 +122,17 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
                                      sr=sr, sess=utils.sess)
                 if preserve_length:
                     X += [this_x]
-                    Y += [[1]]
+                    Y += [1]
                     refs += '{} {} {}'.format(ep, start, end)
                 else:
-                    X += [chunk for chunk in this_x]
-                    Y += [[1] for _ in this_x]
+                    X += [*this_x]
+                    Y += [1 for _ in this_x]
                     refs += ['{} {} {}'.format(ep, start, end) for _ in this_x]
             # except (tf.errors.InvalidArgumentError, Exception) as e:
             except Exception as e:
                 color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
                 pass
 
-        print()
         color.INFO('INFO', 'processing no-laugh data in %s' % ep)
         for start, end in progressbar(nolaughs, redirect_stdout=1):
             if start == end: continue
@@ -142,15 +143,18 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
                                      sr=sr, sess=utils.sess)
                 if preserve_length:
                     X += [this_x]
-                    Y += [[0]]
+                    Y += [0]
                     refs += '{} {} {}'.format(ep, start, end)
                 else:
-                    X += [chunk for chunk in this_x]
-                    Y += [[0] for _ in this_x]
+                    X += [*this_x]
+                    Y += [0 for _ in this_x]
                     refs += ['{} {} {}'.format(ep, start, end) for _ in this_x]
             # except (tf.errors.InvalidArgumentError, Exception) as e:
             except Exception as e:
                 color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
                 pass
 
-    return X, Y, refs
+    if preserve_length:
+        return X, Y, refs
+    else:
+        return np.vstack(X), np.array(Y, dtype=int), np.array(refs, dtype=str)
