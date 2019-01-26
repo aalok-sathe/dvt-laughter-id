@@ -18,6 +18,7 @@ import yaml
 from glob import glob
 from collections import defaultdict
 from scipy.io import wavfile
+from progressbar import progressbar
 
 
 def load_annotations(episode, task=None):
@@ -35,6 +36,9 @@ def load_annotations(episode, task=None):
         pattern = '../data/{}_{}.yml'.format(episode, task)
     else:
         pattern = '../data/{}_*.yml'.format(episode)
+
+    if not glob(pattern):
+        raise ValueError('no matching file found:', episode)
 
     for filename in glob(pattern):
         with open(filename, 'r') as file:
@@ -88,19 +92,26 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
         return: X, Y of shape (n_samples, n_features) when not preserve_length
                               (n_samples, maxlen, n_features) when preserving
                 the number of samples in these two cases would be different
+                refs, a list of where each sample is from in the original ep
     '''
     if type(which_episodes) is str:
         which_episodes = [which_episodes]
 
+    color.INFO('INFO', 'processing episodes {}'.format(str(which_episodes)))
+
     for ep in which_episodes:
+        color.INFO('INFO', 'processing {}'.format(ep))
+
         patches = load_annotations(ep)
         laughs = patches['laughter']
         nolaughs = [(e1, s2) for (s1, e1), (s2, e2) in zip(laughs, laughs[1:])
                     if s2-e1 > 1e3]
-        sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
-        X, Y = [], []
 
-        for i, (start, end) in enumerate(laughs):
+        sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
+        X, Y, refs = [], [], []
+
+        color.INFO('INFO', 'processing laugh data in %s' % ep)
+        for start, end in progressbar(laughs, redirect_stdout=1):
             if start == end: continue
             start_f, end_f = convertref(start, sr), convertref(end, sr)
             # print(start_f, end_f)
@@ -110,15 +121,19 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
                 if preserve_length:
                     X += [this_x]
                     Y += [[1]]
+                    refs += '{} {} {}'.format(ep, start, end)
                 else:
                     X += [chunk for chunk in this_x]
                     Y += [[1] for _ in this_x]
+                    refs += ['{} {} {}'.format(ep, start, end) for _ in this_x]
             # except (tf.errors.InvalidArgumentError, Exception) as e:
             except Exception as e:
-                color.ERR('INFO', 'encountered {}; resuming...'.format(e))
+                color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
                 pass
 
-        for i, (start, end) in enumerate(nolaughs):
+        print()
+        color.INFO('INFO', 'processing no-laugh data in %s' % ep)
+        for start, end in progressbar(nolaughs, redirect_stdout=1):
             if start == end: continue
             start_f, end_f = convertref(start, sr), convertref(end, sr)
             # print(start_f, end_f)
@@ -128,12 +143,14 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
                 if preserve_length:
                     X += [this_x]
                     Y += [[0]]
+                    refs += '{} {} {}'.format(ep, start, end)
                 else:
                     X += [chunk for chunk in this_x]
                     Y += [[0] for _ in this_x]
+                    refs += ['{} {} {}'.format(ep, start, end) for _ in this_x]
             # except (tf.errors.InvalidArgumentError, Exception) as e:
             except Exception as e:
-                color.ERR('INFO', 'encountered {}; resuming...'.format(e))
+                color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
                 pass
 
-    return X, Y
+    return X, Y, refs
