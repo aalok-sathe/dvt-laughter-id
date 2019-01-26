@@ -14,11 +14,7 @@ import numpy as np
 import tensorflow as tf
 
 
-global sess
-sess = None
-
-
-def get_embed(input_wav, sr=None, sess=sess):
+def get_embed(input_wav, sr=None, sess=None):
     '''
     accepts an input of raw wav data and produces an embedding for it treating
     the entire wav data as one sequence of audio
@@ -30,11 +26,11 @@ def get_embed(input_wav, sr=None, sess=sess):
                 used so that it can be reused. note that returned sess must be
                 handled appropriately by the user
     '''
-    color.INFO('INFO', 'generating input example from wav')
+    # color.INFO('INFO', 'generating input example from wav\r')
     examples_batch = vggish_input.waveform_to_examples(input_wav, sr)
 
     # load models and postprocessor (a PCA model)
-    color.INFO('INFO', 'loading vggish model checkpoint')
+    # color.INFO('INFO', 'loading vggish model checkpoint\r')
     pproc = vggish_postprocess.Postprocessor('../vggish/vggish_pca_params.npz')
     if sess == None:
         sess = tf.Session()
@@ -42,25 +38,25 @@ def get_embed(input_wav, sr=None, sess=sess):
         vggish_slim.define_vggish_slim(training=False)
         vggish_slim.load_vggish_slim_checkpoint(sess, '../vggish/vggish_model.ckpt')
     else:
-        color.INFO('INFO', 'attempting to reuse tensorflow session')
+        # color.INFO('INFO', 'attempting to reuse tensorflow session\r')
+        pass
 
-    color.INFO('INFO', 'generating features')
+    # color.INFO('INFO', 'generating features\r')
     features_tensor = sess.graph.get_tensor_by_name('vggish/input_features:0')
-    color.INFO('INFO', 'generating embeddings')
+    # color.INFO('INFO', 'generating embeddings\r')
     embedding_tensor = sess.graph.get_tensor_by_name('vggish/embedding:0')
 
     # Compute embeddings:
-    color.INFO('INFO', 'computing embeddings')
+    # color.INFO('INFO', 'computing embeddings\r')
     [embedding_batch] = sess.run([embedding_tensor],
                                  feed_dict={features_tensor: examples_batch})
-    color.INFO('INFO', 'post-processing data')
+    # color.INFO('INFO', 'post-processing data\r')
     postprocessed_batch = pproc.postprocess(embedding_batch)
 
-    # Print out dimensions:
-    color.INFO('INFO', 'shape of input batches: ' + str(examples_batch.shape))
-    color.INFO('INFO', 'shape of vggish output: ' + str(embedding_batch.shape))
-    color.INFO('INFO', 'shape of postprocessed: '
-                       + str(postprocessed_batch.shape))
+    # Print out dimensions: # TODO: make str formatting error go away
+    # color.INFO('INFO', 'shape of input batches: %s\r' % examples_batch.shape)
+    # color.INFO('INFO', 'shape of vggish output: %s\r' % embedding_batch.shape)
+    # color.INFO('INFO', 'shape postprocessed: %s\r' % postprocessed_batch.shape)
 
     return postprocessed_batch, sess
 
