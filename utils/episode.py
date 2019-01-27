@@ -125,7 +125,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
                     Y += [1]
                     refs += '{} {} {}'.format(ep, start, end)
                 else:
-                    X += [*this_x]
+                    X += [x.reshape(1, -1) for x in this_x]
                     Y += [1 for _ in this_x]
                     refs += ['{} {} {}'.format(ep, start, end) for _ in this_x]
             # except (tf.errors.InvalidArgumentError, Exception) as e:
@@ -146,7 +146,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
                     Y += [0]
                     refs += '{} {} {}'.format(ep, start, end)
                 else:
-                    X += [*this_x]
+                    X += [x.reshape(1, -1) for x in this_x]
                     Y += [0 for _ in this_x]
                     refs += ['{} {} {}'.format(ep, start, end) for _ in this_x]
             # except (tf.errors.InvalidArgumentError, Exception) as e:
