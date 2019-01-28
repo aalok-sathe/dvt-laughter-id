@@ -6,5 +6,7 @@
 
 for file in "$1"/*.mp4
 do
-	ffmpeg -i "$file" -vn -acodec pcm_s16le -ac 1 "$1/../wav/$(basename "$file" .mp4).wav"
+    if [ ! -f "$1/../wav/$(basename "$file" .mp4).wav" ]; then
+	    ffmpeg -i "$file" -vn -acodec pcm_s16le -ac 1 "$1/../wav/$(basename "$file" .mp4).wav"
+    fi
 done
