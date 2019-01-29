@@ -187,7 +187,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
 
         this_X = np.vstack(this_X)
         this_Y = np.array(this_Y, dtype=int)
-        this_refs = np.array(this_refs)
+        this_refs = np.array(this_refs, dtype=str)
 
         if archive and not existsflag:
             np.savez_compressed(archivepath, X=this_X, Y=this_Y, refs=this_refs)
