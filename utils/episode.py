@@ -112,8 +112,6 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
     for ep in which_episodes:
         color.INFO('INFO', 'processing {}'.format(ep))
 
-        this_X, this_Y, this_refs = [], [], []
-
         patches = load_annotations(ep)
         laughs = patches[task]
         nolaughs = [(e1, s2) for (s1, e1), (s2, e2) in zip(laughs, laughs[1:])
@@ -133,6 +131,8 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
                 this_X = arrays['X'].to_list()
                 this_Y = arrays['Y'].to_list()
                 this_refs = arrays['refs'].to_list()
+            else:
+                this_X, this_Y, this_refs = [], [], []
 
         color.INFO('INFO', 'processing %s data in %s' % (task, ep))
         for start, end in progressbar(laughs, redirect_stdout=1):
@@ -179,14 +179,18 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
                 color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
                 pass
 
-        if archive and not existsflag:
-            np.savez_compressed(archivepath, X=np.vstack(this_X),
-                                Y=np.array(this_Y, dtype=int),
-                                refs=np.array(this_refs))
+        X += this_X
+        Y += this_Y
+        refs += this_refs
 
-        X += this_X; del this_X
-        Y += this_Y; del this_Y
-        refs += this_refs; del this_refs
+        this_X = np.vstack(this_X)
+        this_Y = np.array(this_Y, dtype=int)
+        this_refs = np.array(this_refs)
+
+        if archive and not existsflag:
+            np.savez_compressed(archivepath, X=this_X, Y=this_Y, refs=this_refs)
+
+        del this_X; del this_Y; del this_refs
 
     if preserve_length:
         return X, Y, refs
