@@ -130,9 +130,9 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
             if archivepath.exists():
                 existsflag = True
                 arrays = np.load(archivepath)
-                this_X = arrays['X']
-                this_Y = arrays['Y']
-                this_refs = arrays['refs']
+                this_X = arrays['X'].to_list()
+                this_Y = arrays['Y'].to_list()
+                this_refs = arrays['refs'].to_list()
 
         color.INFO('INFO', 'processing %s data in %s' % (task, ep))
         for start, end in progressbar(laughs, redirect_stdout=1):
@@ -173,19 +173,20 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
                 else:
                     this_X += [x.reshape(1, -1) for x in this_x]
                     this_Y += [0 for _ in this_x]
-                    this_refs += ['{} {} {}'.format(ep, start, end)
-                                  for _ in this_x]
+                    this_refs += [(ep, start, end) for _ in this_x]
             # except (tf.errors.InvalidArgumentError, Exception) as e:
             except Exception as e:
                 color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
                 pass
 
         if archive and not existsflag:
-            np.savez_compressed(archivepath, X=this_X, Y=this_Y, refs=this_refs)
+            np.savez_compressed(archivepath, X=np.vstack(this_X),
+                                Y=np.array(this_Y, dtype=int),
+                                refs=np.array(this_refs))
 
-        X += this_X
-        Y += this_Y
-        refs += this_refs
+        X += this_X; del this_X
+        Y += this_Y; del this_Y
+        refs += this_refs; del this_refs
 
     if preserve_length:
         return X, Y, refs
