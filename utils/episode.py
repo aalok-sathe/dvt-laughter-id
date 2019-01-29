@@ -148,12 +148,11 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
                 if preserve_length:
                     this_X += [this_x]
                     this_Y += [1]
-                    this_refs += '{} {} {}'.format(ep, start, end)
+                    this_refs += [(ep, start, end)]
                 else:
                     this_X += [x.reshape(1, -1) for x in this_x]
                     this_Y += [1 for _ in this_x]
-                    this_refs += ['{} {} {}'.format(ep, start, end)
-                                  for _ in this_x]
+                    this_refs += [(ep, start, end) for _ in this_x]
             # except (tf.errors.InvalidArgumentError, Exception) as e:
             except Exception as e:
                 color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
@@ -171,7 +170,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
                 if preserve_length:
                     this_X += [this_x]
                     this_Y += [0]
-                    this_refs += '{} {} {}'.format(ep, start, end)
+                    this_refs += [(ep, start, end)]
                 else:
                     this_X += [x.reshape(1, -1) for x in this_x]
                     this_Y += [0 for _ in this_x]
