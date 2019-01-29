@@ -20,6 +20,7 @@ from collections import defaultdict
 from scipy.io import wavfile
 import numpy as np
 from progressbar import progressbar
+from pathlib import Path
 
 
 def load_annotations(episode, task=None):
@@ -74,7 +75,8 @@ def convertref(value=None, sr=None, to='audio'):
         raise
 
 
-def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
+def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
+             archive='../data/archive', task='laughter'):
     '''
     gets embeddings data for a list of episodes.
     as a list, expects basenames of the episodes without any attribute or
@@ -89,6 +91,11 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
         preserve_length: whether to return data as disjoint chunks of equal
                          length, or preserve length of annotated chunks and
                          return variable-length data (defaut: False)
+        archive: directory housing memoized archives of the individual episodes
+                 data for a task so that they don't have to be recomputed each
+                 time. default: '../data/archive'. If an empty string or None
+                 or anything that evaluates to False is passed, will not
+                 archive the data for this run.
 
         return: X, Y of shape (n_samples, n_features) when not preserve_length
                               (n_samples, maxlen, n_features) when preserving
@@ -105,15 +112,31 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
     for ep in which_episodes:
         color.INFO('INFO', 'processing {}'.format(ep))
 
+        this_X, this_Y, this_refs = [], [], []
+
         patches = load_annotations(ep)
-        laughs = patches['laughter']
+        laughs = patches[task]
         nolaughs = [(e1, s2) for (s1, e1), (s2, e2) in zip(laughs, laughs[1:])
                     if s2-e1 > 1e3]
 
         sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
 
-        color.INFO('INFO', 'processing laugh data in %s' % ep)
+        existsflag = False
+        archivepath = Path(archive)
+        archivepath = archivepath.joinpath(ep + '_%s_datachunks.npz' % task)
+
+        if archive:
+            # check if archives already exist
+            if archivepath.exists():
+                existsflag = True
+                arrays = np.load(archivepath)
+                this_X = arrays['X']
+                this_Y = arrays['Y']
+                this_refs = arrays['refs']
+
+        color.INFO('INFO', 'processing %s data in %s' % (task, ep))
         for start, end in progressbar(laughs, redirect_stdout=1):
+            if existsflag: break
             if start == end: continue
             start_f, end_f = convertref(start, sr), convertref(end, sr)
             # print(start_f, end_f)
@@ -121,20 +144,22 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
                 this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
                                      sr=sr, sess=utils.sess)
                 if preserve_length:
-                    X += [this_x]
-                    Y += [1]
-                    refs += '{} {} {}'.format(ep, start, end)
+                    this_X += [this_x]
+                    this_Y += [1]
+                    this_refs += '{} {} {}'.format(ep, start, end)
                 else:
-                    X += [x.reshape(1, -1) for x in this_x]
-                    Y += [1 for _ in this_x]
-                    refs += ['{} {} {}'.format(ep, start, end) for _ in this_x]
+                    this_X += [x.reshape(1, -1) for x in this_x]
+                    this_Y += [1 for _ in this_x]
+                    this_refs += ['{} {} {}'.format(ep, start, end)
+                                  for _ in this_x]
             # except (tf.errors.InvalidArgumentError, Exception) as e:
             except Exception as e:
                 color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
                 pass
 
-        color.INFO('INFO', 'processing no-laugh data in %s' % ep)
+        color.INFO('INFO', 'processing no-%s data in %s' % (task, ep))
         for start, end in progressbar(nolaughs, redirect_stdout=1):
+            if existsflag: break
             if start == end: continue
             start_f, end_f = convertref(start, sr), convertref(end, sr)
             # print(start_f, end_f)
@@ -142,17 +167,25 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False):
                 this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
                                      sr=sr, sess=utils.sess)
                 if preserve_length:
-                    X += [this_x]
-                    Y += [0]
-                    refs += '{} {} {}'.format(ep, start, end)
+                    this_X += [this_x]
+                    this_Y += [0]
+                    this_refs += '{} {} {}'.format(ep, start, end)
                 else:
-                    X += [x.reshape(1, -1) for x in this_x]
-                    Y += [0 for _ in this_x]
-                    refs += ['{} {} {}'.format(ep, start, end) for _ in this_x]
+                    this_X += [x.reshape(1, -1) for x in this_x]
+                    this_Y += [0 for _ in this_x]
+                    this_refs += ['{} {} {}'.format(ep, start, end)
+                                  for _ in this_x]
             # except (tf.errors.InvalidArgumentError, Exception) as e:
             except Exception as e:
                 color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
                 pass
+
+        if archive and not existsflag:
+            np.savez_compressed(archivepath, X=this_X, Y=this_Y, refs=this_refs)
+
+        X += this_X
+        Y += this_Y
+        refs += this_refs
 
     if preserve_length:
         return X, Y, refs
