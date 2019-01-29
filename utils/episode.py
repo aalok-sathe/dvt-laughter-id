@@ -117,8 +117,6 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
         nolaughs = [(e1, s2) for (s1, e1), (s2, e2) in zip(laughs, laughs[1:])
                     if s2-e1 > 1e3]
 
-        sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
-
         existsflag = False
         archivepath = Path(archive)
         archivepath = archivepath.joinpath(ep + '_%s_datachunks.npz' % task)
@@ -126,6 +124,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
         if archive:
             # check if archives already exist
             if archivepath.exists():
+                color.INFO('INFO', 'loading from {}'.format(archivepath))
                 existsflag = True
                 arrays = np.load(archivepath)
                 this_X = arrays['X'].to_list()
@@ -133,6 +132,9 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
                 this_refs = arrays['refs'].to_list()
             else:
                 this_X, this_Y, this_refs = [], [], []
+                sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
+        else:
+            sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
 
         color.INFO('INFO', 'processing %s data in %s' % (task, ep))
         for start, end in progressbar(laughs, redirect_stdout=1):
