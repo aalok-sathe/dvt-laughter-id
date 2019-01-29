@@ -127,9 +127,9 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
                 color.INFO('INFO', 'loading from {}'.format(archivepath))
                 existsflag = True
                 arrays = np.load(archivepath)
-                this_X = arrays['X'].to_list()
-                this_Y = arrays['Y'].to_list()
-                this_refs = arrays['refs'].to_list()
+                this_X = arrays['X'].tolist()
+                this_Y = arrays['Y'].tolist()
+                this_refs = arrays['refs'].tolist()
             else:
                 this_X, this_Y, this_refs = [], [], []
                 sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
