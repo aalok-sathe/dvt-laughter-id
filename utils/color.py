@@ -5,7 +5,7 @@ though it were housing an enum.
 """
 # from colored import fgcol, bgcol, colattr
 # from functools import partial
-from sys import stderr
+# from sys import stderr
 
 RED = "\033[1;31m"
 GREEN = "\033[1;32m"
@@ -22,6 +22,6 @@ BOLD = "\033[;1m"
 REVERSE = "\033[;7m"
 
 def ERR(text='ERR', msg=''):
-    print(RED + '{}: '.format(text) + RESET, msg, file=stderr)
+    print(RED + '{}: '.format(text) + RESET, msg)
 def INFO(text='INFO', msg=''):
     print(YELLOW + '{}: '.format(text) + RESET, msg)
