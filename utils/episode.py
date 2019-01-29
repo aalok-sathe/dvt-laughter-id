@@ -186,7 +186,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
 
         this_X = np.vstack(this_X)
         this_Y = np.array(this_Y, dtype=int)
-        this_refs = np.array(this_refs, dtype=str)
+        this_refs = np.array(this_refs, dtype=object)
 
         if archive and not existsflag:
             np.savez_compressed(archivepath, X=this_X, Y=this_Y, refs=this_refs)
@@ -196,4 +196,5 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
     if preserve_length:
         return X, Y, refs
     else:
-        return np.vstack(X), np.array(Y, dtype=int), np.array(refs, dtype=str)
+        return np.vstack(X), np.array(Y, dtype=int), np.array(refs,
+                                                              dtype=object)
