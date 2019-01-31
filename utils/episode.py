@@ -198,3 +198,86 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
     else:
         return np.vstack(X), np.array(Y, dtype=int), np.array(refs,
                                                               dtype=object)
+
+
+def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1):
+    '''
+    Given wavdata of an audio signal and its sampling rate, this method
+    will generate more embeddings for the same data than are typically needed
+    for training, in order to get a better estimate of where in the audio
+    there's canned laughter.
+    ---
+        wavdata: raw wavdata of an audio signal; typically, an entire episode
+        sr: audio sampling rate (frames per second; Hz)
+        model: the model to used to assign probability scores to an embedding.
+               must be an instance of the Keras Model or BaseModel class
+               and support prediction of data.
+        precision: number of embeddings to generate, each with an equally
+                   spaced-out offset less than 0.96s so that each embedding is
+                   generated over a unique time interval. this number will also
+                   determine the precision of the labeling, to the nearest
+                   (.96/precision) seconds. note than generating an embedding
+                   for each precision-point takes time and memory, so high
+                   precision and memory-and-time constraints need to be
+                   balanced for an optimal level of precision (default: 3;
+                   min: 1).
+        L: the length of the sequence the model accepts to make predictions
+           about labels. (defaut: 1) [WIP; not implemented]. any value other
+           than one result in an Exception.
+
+        return: outputs a (len(wavdata)*precision/(sr*.96-L), n_classes) shaped
+                array of labels predicted by the model supplied
+
+    '''
+    color.INFO('FUTURE', 'WIP; not yet implemented')
+    raise NotImplementedError
+
+
+def _binary_probs_to_multiclass(binary_probs=None):
+    '''
+    Helper method to convert an array of binary probabilities to multiclass
+    probabilities. This is necessary because a multiclass probabilities array
+    specifies a probability for each class, whereas, a binary array
+    '''
+    assert len(binary_probs.shape) == 1, 'badly shaped binary probabilities'
+    multi = [[1-x, x] for x in binary_probs]
+    return np.array(multi)
+
+
+def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.7)):
+    '''
+    Once a model outputs probabilities for some sequence of data, that
+    data shall be passed to this method. This method will use various
+    ways to decode an underlying sequence in order to determine where
+    the *actual* canned laughter was.
+    possible algorithms to decode sequence:
+        - 'neural'
+          surround-n-gram neural network: this method will use a pretrained
+          Keras model to label some sample i using the multiclass probabilities
+          of all of the samples numbered [i-n, i-n+1, ... i, i+1, ..., i+n],
+          i.e., n before and n afterwards.
+        - 'hmm'
+          HMM: this method will use a hidden Markov model with underlying
+               states that are the same as surface states (the two state spaces
+               for hidden and observed are equivalent)
+        - 'threshold'
+          window and threshold method: this is simple heuristic-based method
+          that will observe windows of length n, and if the average probability
+          of any single class is at least t, it will assign that same
+          class to all of the samples in that window. imagine a threshold of
+          0.9, then it is intuitively likely if few of the samples are labeled
+          with some other class, they may have been accidentally so-labeled.
+    ---
+        probs: an nparray of (n_samples, n_classes) probabilities such that
+               foreach sample, the sum of probabilities across classes adds up
+               to 1. In case supplied array is of shape (n_samples,) it will be
+               converted to multiclass using this module's
+               _binary_probs_to_multiclass method
+
+        return: a list of len n_samples, with the ith sample being the
+                predicted label of that sample. this prediction would usually
+                also incorporate somehow the samples before and after the
+                current sample
+    '''
+    color.INFO('FUTURE', 'WIP; not yet implemented')
+    raise NotImplementedError
