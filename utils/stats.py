@@ -7,7 +7,6 @@ this file houses util functions specific to data processing and visualization
 import color
 # stdlib and package imports
 import numpy as np
-from sys import stderr
 from matplotlib import pyplot as plt
 from sklearn.metrics import roc_curve
 

@@ -137,48 +137,50 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
             sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
 
         color.INFO('INFO', 'processing %s data in %s' % (task, ep))
-        for start, end in progressbar(laughs, redirect_stdout=1):
-            if existsflag: break
-            if start == end: continue
-            start_f, end_f = convertref(start, sr), convertref(end, sr)
-            # print(start_f, end_f)
-            try:
-                this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
-                                     sr=sr, sess=utils.sess)
-                if preserve_length:
-                    this_X += [this_x]
-                    this_Y += [1]
-                    this_refs += [(ep, start, end)]
-                else:
-                    this_X += [x.reshape(1, -1) for x in this_x]
-                    this_Y += [1 for _ in this_x]
-                    this_refs += [(ep, start, end) for _ in this_x]
-            # except (tf.errors.InvalidArgumentError, Exception) as e:
-            except Exception as e:
-                color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
-                pass
+        if not existsflag:
+            for start, end in progressbar(laughs, redirect_stdout=False):
+                if existsflag: break
+                if start == end: continue
+                start_f, end_f = convertref(start, sr), convertref(end, sr)
+                # print(start_f, end_f)
+                try:
+                    this_x,
+                    utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
+                                           sr=sr, sess=utils.sess)
+                    if preserve_length:
+                        this_X += [this_x]
+                        this_Y += [1]
+                        this_refs += [(ep, start, end)]
+                    else:
+                        this_X += [x.reshape(1, -1) for x in this_x]
+                        this_Y += [1 for _ in this_x]
+                        this_refs += [(ep, start, end) for _ in this_x]
+                # except (tf.errors.InvalidArgumentError, Exception) as e:
+                except Exception as e:
+                    color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
+                    pass
 
         color.INFO('INFO', 'processing no-%s data in %s' % (task, ep))
-        for start, end in progressbar(nolaughs, redirect_stdout=1):
-            if existsflag: break
-            if start == end: continue
-            start_f, end_f = convertref(start, sr), convertref(end, sr)
-            # print(start_f, end_f)
-            try:
-                this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
-                                     sr=sr, sess=utils.sess)
-                if preserve_length:
-                    this_X += [this_x]
-                    this_Y += [0]
-                    this_refs += [(ep, start, end)]
-                else:
-                    this_X += [x.reshape(1, -1) for x in this_x]
-                    this_Y += [0 for _ in this_x]
-                    this_refs += [(ep, start, end) for _ in this_x]
-            # except (tf.errors.InvalidArgumentError, Exception) as e:
-            except Exception as e:
-                color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
-                pass
+        if not existsflag:
+            for start, end in progressbar(nolaughs, redirect_stdout=True):
+                if start == end: continue
+                start_f, end_f = convertref(start, sr), convertref(end, sr)
+                # print(start_f, end_f)
+                try:
+                    this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
+                                         sr=sr, sess=utils.sess)
+                    if preserve_length:
+                        this_X += [this_x]
+                        this_Y += [0]
+                        this_refs += [(ep, start, end)]
+                    else:
+                        this_X += [x.reshape(1, -1) for x in this_x]
+                        this_Y += [0 for _ in this_x]
+                        this_refs += [(ep, start, end) for _ in this_x]
+                # except (tf.errors.InvalidArgumentError, Exception) as e:
+                except Exception as e:
+                    color.ERR('INFO', 'encountered {}; resuming...\r'.format(e))
+                    pass
 
         X += this_X
         Y += this_Y
