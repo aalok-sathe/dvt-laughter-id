@@ -36,7 +36,8 @@ def get_embed(input_wav, sr=None, sess=None):
         sess = tf.Session()
         tf.Graph().as_default()
         vggish_slim.define_vggish_slim(training=False)
-        vggish_slim.load_vggish_slim_checkpoint(sess, '../vggish/vggish_model.ckpt')
+        vggish_slim.load_vggish_slim_checkpoint(sess,
+                                                '../vggish/vggish_model.ckpt')
     else:
         # color.INFO('INFO', 'attempting to reuse tensorflow session\r')
         pass
