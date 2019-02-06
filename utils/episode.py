@@ -225,14 +225,35 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1):
                    min: 1).
         L: the length of the sequence the model accepts to make predictions
            about labels. (defaut: 1) [WIP; not implemented]. any value other
-           than one result in an Exception.
+           than 1 would result in an Exception.
 
         return: outputs a (len(wavdata)*precision/(sr*.96-L), n_classes) shaped
                 array of labels predicted by the model supplied
 
     '''
-    color.INFO('FUTURE', 'WIP; not yet implemented')
-    raise NotImplementedError
+    offsets = np.arange(0, 0.96, 0.96/precision)
+    offsets = [int(sr*x) for x in offsets]
+
+    embs = []
+    for start_f in offsets:
+        this_x,
+        utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
+                               sr=sr, sess=utils.sess)
+        emb, utils.sess = get_embed(input_wav=data[start_f:], sr=sr,
+                                    sess=utils.sess)
+        embs.append(emb)
+
+    sequence = [*sum(zip(*embs), ())]
+
+    preds = []
+    for item in sequence:
+        pred = model.predict(x=item)
+        preds.append(pred)
+
+    return np.array(preds)
+
+    # color.INFO('FUTURE', 'WIP; not yet implemented')
+    # raise NotImplementedError
 
 
 def _binary_probs_to_multiclass(binary_probs=None):
@@ -269,6 +290,10 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.7)):
           class to all of the samples in that window. imagine a threshold of
           0.9, then it is intuitively likely if few of the samples are labeled
           with some other class, they may have been accidentally so-labeled.
+        - 'modethreshold'
+          like 'threshold' but instead of considering avg probability, it
+          considers what percentage of labels are a particular class and if
+          that surpasses a threshold, then all labels are made that same label
     ---
         probs: an nparray of (n_samples, n_classes) probabilities such that
                foreach sample, the sum of probabilities across classes adds up
@@ -281,5 +306,49 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.7)):
                 also incorporate somehow the samples before and after the
                 current sample
     '''
-    color.INFO('FUTURE', 'WIP; not yet implemented')
-    raise NotImplementedError
+    if len(probs.shape) == 1:
+        probs = _binary_probs_to_multiclass(probs)
+
+    if algorithm == 'threshold':
+        n, t = params['n'], params['t']
+        labels = [np.argmax(timechunk) for timechunk in probs]
+
+        for i in range(len(probs)-n):
+            for c in range(probs.shape[-1]):
+                if np.average(probs[i:i+n]) >= t:
+                    labels[i:i+n] = [c for _ in range(n)]
+
+        return labels
+
+    else:
+        color.INFO('FUTURE', 'WIP; not yet implemented')
+        raise NotImplementedError
+
+
+def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
+                      algorithms=['threshold']):
+    '''
+    This method is meant to tie together the two methods before it,
+    `score_continuous_data`, and `decode_sequence`. The method takes in the
+    name of an episode, and does the heavylifting in loading the wav data,
+    detecting the sampling rate, assigning labels, and so on.
+    ---
+        episode: standard episode name in these scheme (friends-s%%-e%%)
+        model: an instance of Keras BaseModel class that supports model.predict
+               in order to assign multiclass/binary probabilities to data
+    '''
+
+    sr, wavdata = wavfile.read('../wav/{}.wav'.format(episode))
+    preds = score_continuous_data(wavdata=wavdata, sr=sr, model=model,
+                                  precision=precision)
+
+    decoded = defaultdict(list)
+    implemented = ['threshold']
+    for alg in algorithms:
+        if alg not in implemented:
+            color.INFO('FUTURE', 'WIP; not yet implemented')
+            raise NotImplementedError
+
+        decoded[alg] = decode_sequence(probs=preds, algorithm=alg)
+
+    return decoded
