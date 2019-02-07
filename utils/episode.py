@@ -236,7 +236,7 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1):
 
     embs = []
     for start_f in offsets:
-        emb, utils.sess = get_embed(input_wav=data[start_f:], sr=sr,
+        emb, utils.sess = get_embed(input_wav=wavdata[start_f:], sr=sr,
                                     sess=utils.sess)
         embs.append(emb)
 
