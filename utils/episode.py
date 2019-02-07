@@ -238,8 +238,9 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
     archivepath = archivepath.joinpath(episode + '_emb_prec=%d.npz' % precision)
 
     if archivepath.exists():
+        color.INFO('INFO', 'found archived data at {}; loading'.format(archivepath))
         data = np.load(archivepath)
-        embs = data['embs'].to_list()
+        embs = data['embs'].tolist()
     else:
         embs = []
         for x in offsets:
@@ -257,10 +258,13 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
     color.INFO('INFO', 'making predictions')
     preds = []
     for item in sequence:
-        pred = model.predict(x=item)
+        # print(item.shape)
+        pred = model.predict(x=item.reshape(1,-1))
         preds.append(pred)
 
-    return np.array(preds)
+    # howmany = len(preds)
+
+    return np.vstack(preds)
 
     # color.INFO('FUTURE', 'WIP; not yet implemented')
     # raise NotImplementedError
@@ -272,7 +276,8 @@ def _binary_probs_to_multiclass(binary_probs=None):
     probabilities. This is necessary because a multiclass probabilities array
     specifies a probability for each class, whereas, a binary array
     '''
-    assert len(binary_probs.shape) == 1, 'badly shaped binary probabilities'
+    assert binary_probs.shape[-1] == 1, 'badly shaped binary probabilities'
+    color.INFO('INFO', 'converting binary probs array to multiclass')
     multi = [[1-x, x] for x in binary_probs]
     return np.array(multi)
 
@@ -316,9 +321,11 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.7)):
                 also incorporate somehow the samples before and after the
                 current sample
     '''
-    if len(probs.shape) == 1:
+    color.INFO('INFO', 'shape of input probs received is: {}'.format(probs.shape))
+    if probs.shape[-1] == 1:
         probs = _binary_probs_to_multiclass(probs)
 
+    print(probs)
     if algorithm == 'threshold':
         n, t = params['n'], params['t']
         labels = [np.argmax(timechunk) for timechunk in probs]
