@@ -277,7 +277,7 @@ def _binary_probs_to_multiclass(binary_probs=None):
     return np.array(multi)
 
 
-def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.7)):
+def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
     '''
     Once a model outputs probabilities for some sequence of data, that
     data shall be passed to this method. This method will use various
@@ -336,7 +336,7 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.7)):
 
 
 def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
-                      algorithms=['threshold']):
+                      algorithms=['threshold'], params=dict(n=5, t=.8)):
     '''
     This method is meant to tie together the two methods before it,
     `score_continuous_data`, and `decode_sequence`. The method takes in the
@@ -359,5 +359,8 @@ def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
             decoded[alg] = decode_sequence(probs=preds, algorithm=alg)
         except NotImplementedError:
             color.INFO('FUTURE', 'WIP; {} not yet implemented'.format(alg))
+
+    decoded['timestamp'] = [int(i*(.96e3/precision))
+                            for i, _ in enumerate(preds)]
 
     return decoded
