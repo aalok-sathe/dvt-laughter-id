@@ -5,13 +5,61 @@ process and make it cleaner.
 it remains to be seen how useful it will be.
 keeping it in the repo for now.
 '''
-
+# local imports
+import color
+# library imports
 import keras.backend as K
 from keras.models import Sequential, model_from_yaml
 from keras.layers import Dense, Dropout, LeakyReLU, Flatten, LSTM, Input,
                          Masking
 from keras.callbacks import ModelCheckpoint
 from keras.utils import normalize
+
+
+def build_laugh_model(*args, **params):
+    '''
+    builds a standard laughter ID model with either the supplied, or otherwise
+    predetermined optimum parameters.
+    possible parameters:
+    '''
+    defaults = dict(dense0=14, drop0=.5, dense1=9, drop1=.2, act='relu',
+                    optimizer='rmsprop')
+    for key in defaults.keys():
+        if key not in params:
+            params[key] = defaults[key]
+
+    if 0 < len(args) < len(defaults)-1:
+        color.ERR('ERR', 'some positional arguments supplied but not enough '
+                         'arguments supplied (needed: %d)' % len(defaults))
+        raise ValueError
+    elif len(args) == len(defaults)-1:
+        keys = ['dense0', 'drop0', 'dense1', 'drop1', 'act', 'optimizer']
+        for i, thing in enumerate(args):
+            params[keys[i]] = thing
+
+    # in
+    inp = Input(shape=(128,), name='in0')
+
+    # stack 0
+    layer = Dense(params['dense0'], activation=params['act'], name='d0')(inp)
+    layer = Dropout(params['drop0'], name='dr0')(layer)
+
+    # stack 1
+    layer = Dense(params['dense1'], activation=params['act'], name='d1')(layer)
+    layer = Dropout(params['drop1'], name='dr1')(layer)
+
+    # out
+    layer = Dense(1, activation='sigmoid', name='out')(layer)
+
+    model = Model(inputs=[inp], outputs=[layer])
+    model.compile(optimizer=params['optimizer'], loss='binary_crossentropy',
+                  metrics=['binary_accuracy'])
+
+    if params.get('verbose', True):
+        model.summary()
+
+    return model
+
 
 def build_dense_layers(layer_sizes=[None], drop=0):
     '''
