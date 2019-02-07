@@ -10,8 +10,7 @@ import color
 # library imports
 import keras.backend as K
 from keras.models import Sequential, model_from_yaml
-from keras.layers import Dense, Dropout, LeakyReLU, Flatten, LSTM, Input,
-                         Masking
+from keras.layers import Dense, Dropout, LeakyReLU, Flatten, LSTM, Input
 from keras.callbacks import ModelCheckpoint
 from keras.utils import normalize
 
