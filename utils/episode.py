@@ -203,7 +203,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
 
 
 def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
-                          archive='../data/archive'):
+                          archive='../data/archive', episode='friends-s03-e09'):
     '''
     Given wavdata of an audio signal and its sampling rate, this method
     will generate more embeddings for the same data than are typically needed
@@ -235,7 +235,7 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
     offsets = np.arange(0, 0.96, 0.96/precision)
 
     archivepath = Path(archive)
-    archivepath = archivepath.joinpath(ep + '_emb_prec=%d.npz' % precision)
+    archivepath = archivepath.joinpath(episode + '_emb_prec=%d.npz' % precision)
 
     if archivepath.exists():
         data = np.load(archivepath)
@@ -350,7 +350,7 @@ def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
 
     sr, wavdata = wavfile.read('../wav/{}.wav'.format(episode))
     preds = score_continuous_data(wavdata=wavdata, sr=sr, model=model,
-                                  precision=precision)
+                                  precision=precision, episode=episode)
 
     decoded = defaultdict(list)
     for alg in algorithms:
