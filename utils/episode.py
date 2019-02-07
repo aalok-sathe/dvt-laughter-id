@@ -232,10 +232,11 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1):
 
     '''
     offsets = np.arange(0, 0.96, 0.96/precision)
-    offsets = [int(sr*x) for x in offsets]
 
     embs = []
-    for start_f in offsets:
+    for x in offsets:
+        start_f = int(sr*x)
+        color.INFO('INFO', 'computing embedding for offset {}'.format(start_f))
         emb, utils.sess = get_embed(input_wav=wavdata[start_f:], sr=sr,
                                     sess=utils.sess)
         embs.append(emb)
@@ -318,7 +319,7 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.7)):
         return labels
 
     else:
-        color.INFO('FUTURE', 'WIP; not yet implemented')
+        # color.INFO('FUTURE', 'WIP; not yet implemented')
         raise NotImplementedError
 
 
@@ -340,12 +341,11 @@ def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
                                   precision=precision)
 
     decoded = defaultdict(list)
-    implemented = ['threshold']
     for alg in algorithms:
-        if alg not in implemented:
+        color.INFO('INFO', 'decoding labels to {} with {}'.format(episode, alg))
+        try:
+            decoded[alg] = decode_sequence(probs=preds, algorithm=alg)
+        except NotImplementedError:
             color.INFO('FUTURE', 'WIP; {} not yet implemented'.format(alg))
-            # raise NotImplementedError
-
-        decoded[alg] = decode_sequence(probs=preds, algorithm=alg)
 
     return decoded
