@@ -325,7 +325,7 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
     if probs.shape[-1] == 1:
         probs = _binary_probs_to_multiclass(probs)
 
-    print(probs)
+    # print(probs) # DEBUG
     if algorithm == 'threshold':
         n, t = params['n'], params['t']
         labels = [np.argmax(timechunk) for timechunk in probs]
@@ -365,9 +365,9 @@ def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
         try:
             decoded[alg] = decode_sequence(probs=preds, algorithm=alg)
         except NotImplementedError:
-            color.INFO('FUTURE', 'WIP; {} not yet implemented'.format(alg))
+            color.INFO('FUTURE', 'WIP; "{}" not yet implemented'.format(alg))
 
     decoded['timestamp'] = [int(i*(.96e3/precision))
                             for i, _ in enumerate(preds)]
 
-    return decoded
+    return decoded, preds
