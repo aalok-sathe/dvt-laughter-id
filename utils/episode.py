@@ -253,7 +253,7 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
         np.savez_compressed(archivepath, embs=np.array(embs))
 
     color.INFO('INFO', 'unpacking offset embeddings into single list')
-    sequence = [*sum(zip(*embs), ())] if precision > 1 else embs[0]
+    sequence = [*sum(zip(*embs), ())] if precision > 1 else np.vstack(embs) 
 
     color.INFO('INFO', 'making predictions')
     preds = []
