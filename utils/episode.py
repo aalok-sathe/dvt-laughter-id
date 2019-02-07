@@ -236,9 +236,6 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1):
 
     embs = []
     for start_f in offsets:
-        this_x,
-        utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
-                               sr=sr, sess=utils.sess)
         emb, utils.sess = get_embed(input_wav=data[start_f:], sr=sr,
                                     sess=utils.sess)
         embs.append(emb)
@@ -346,8 +343,8 @@ def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
     implemented = ['threshold']
     for alg in algorithms:
         if alg not in implemented:
-            color.INFO('FUTURE', 'WIP; not yet implemented')
-            raise NotImplementedError
+            color.INFO('FUTURE', 'WIP; {} not yet implemented'.format(alg))
+            # raise NotImplementedError
 
         decoded[alg] = decode_sequence(probs=preds, algorithm=alg)
 
