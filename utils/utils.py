@@ -40,3 +40,20 @@ def import_by_path(name, path):
         color.ERR('ERR',
                   'module {} could not be imported from {}'.format(name, path))
         raise
+
+
+def archive_handler(archivepath=None, filename=None, data=None):
+    '''
+    A middle-person function that should be used within another method to
+    handle archiving of precomputed data to avoid unnecessary recomputation.
+    Assumes archiving method is numpy savez_compressed. Will read data using
+    a similar kind of method too.
+    ---
+        archivepath: the base path of the directory housing
+        filename: a string filename of the archive within archives directory
+                  (required)
+        data: the data to archive, if archive doesn't exist (optional)
+              if data is supplied, archive will be written to; else if no data
+              is supplied, archive will be read and the data returned
+    '''
+    raise NotImplementedError

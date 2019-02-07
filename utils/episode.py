@@ -202,7 +202,8 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
                                                               dtype=object)
 
 
-def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1):
+def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
+                          archive='../data/archive'):
     '''
     Given wavdata of an audio signal and its sampling rate, this method
     will generate more embeddings for the same data than are typically needed
@@ -233,16 +234,27 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1):
     '''
     offsets = np.arange(0, 0.96, 0.96/precision)
 
-    embs = []
-    for x in offsets:
-        start_f = int(sr*x)
-        color.INFO('INFO', 'computing embedding for offset {}'.format(start_f))
-        emb, utils.sess = get_embed(input_wav=wavdata[start_f:], sr=sr,
-                                    sess=utils.sess)
-        embs.append(emb)
+    archivepath = Path(archive)
+    archivepath = archivepath.joinpath(ep + '_emb_prec=%d.npz' % precision)
 
+    if archivepath.exists():
+        data = np.load(archivepath)
+        embs = data['embs'].to_list()
+    else:
+        embs = []
+        for x in offsets:
+            start_f = int(sr*x)
+            color.INFO('INFO',
+                       'computing embedding for offset {}'.format(start_f))
+            emb, utils.sess = get_embed(input_wav=wavdata[start_f:], sr=sr,
+                                        sess=utils.sess)
+            embs.append(emb)
+        np.savez_compressed(archivepath, embs=np.array(embs))
+
+    color.INFO('INFO', 'unpacking offset embeddings into single list')
     sequence = [*sum(zip(*embs), ())]
 
+    color.INFO('INFO', 'making predictions')
     preds = []
     for item in sequence:
         pred = model.predict(x=item)
