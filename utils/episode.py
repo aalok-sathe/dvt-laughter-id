@@ -281,7 +281,7 @@ def _binary_probs_to_multiclass(binary_probs=None):
     assert binary_probs.shape[-1] == 1, 'badly shaped binary probabilities'
     color.INFO('INFO', 'converting binary probs array to multiclass')
     multi = [[1-x, x] for x in binary_probs]
-    return np.array(multi)
+    return np.vstack(multi)
 
 
 def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
@@ -323,18 +323,22 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
                 also incorporate somehow the samples before and after the
                 current sample
     '''
-    color.INFO('INFO', 'shape of input probs received is: {}'.format(probs.shape))
+    color.INFO('INFO', 'shape of input probs is: {}'.format(probs.shape))
     if probs.shape[-1] == 1:
         probs = _binary_probs_to_multiclass(probs)
 
-    # print(probs)
+    color.INFO('INFO', 'received probs of shape {}'.format(str(probs.shape)))
     if algorithm == 'threshold':
         n, t = params['n'], params['t']
         labels = [np.argmax(timechunk) for timechunk in probs]
 
         for i in range(len(probs)-n):
             for c in range(probs.shape[-1]):
-                if np.average(probs[i:i+n]) >= t:
+                if np.average(probs[i:i+n][c]) >= t:
+                    color.INFO('DEBUG',
+                               'found threshold window of {} at [{}:{}] for \
+                                class {}'.format(np.average(probs[i:i+n][c]),
+                                                 i, i+n, c))
                     labels[i:i+n] = [c for _ in range(n)]
 
         return labels
