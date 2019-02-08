@@ -19,7 +19,15 @@
 python3 -m pip install -r requirements.txt [--user] [--upgrade]
 ```
 
-3. Make sure you have raw data OR download pre-computed embeddings
+3. Get model weights for VGGish: this project relies
+on VGGish as one of its backends for computing
+embeddings. To compute embeddings, you would need to
+download the VGGish models (requires `curl`)
+    ```bash
+    ./utils/download_vggish.sh
+    ```
+
+4. Make sure you have raw data OR download pre-computed embeddings
 
     - If you have access to _friends_ episodes,
     please place them in `video/` (must be `.mp4`)
