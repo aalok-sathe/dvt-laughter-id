@@ -21,8 +21,11 @@ def build_laugh_model(*args, **params):
     predetermined optimum parameters.
     possible parameters:
     '''
-    defaults = dict(dense0=14, drop0=.5, dense1=9, drop1=.2, act='relu',
+    # defaults = dict(dense0=14, drop0=.5, dense1=9, drop1=.2, act='relu',
+    #                optimizer='rmsprop')
+    defaults = dict(dense0=16, drop0=.4, dense1=8, drop1=.4, act='relu',
                     optimizer='rmsprop')
+
     for key in defaults.keys():
         if key not in params:
             params[key] = defaults[key]

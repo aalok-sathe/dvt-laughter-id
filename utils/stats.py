@@ -86,3 +86,5 @@ def plot_roc_curve(x, y_true, model):
     fpr, tpr, thres = roc_curve(y_true=y_true, y_score=y_pred)
     plt.plot(fpr, tpr, '.-')
     plt.show()
+
+    return fpr, tpr, thres
