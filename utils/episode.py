@@ -238,7 +238,7 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
     archivepath = archivepath.joinpath(episode + '_emb_prec=%d.npz' % precision)
 
     if archivepath.exists():
-        color.INFO('INFO', 'found archived data at {}; loading'.format(archivepath))
+        color.INFO('INFO', 'loading archived data from {}'.format(archivepath))
         data = np.load(archivepath)
         embs = data['embs'].tolist()
     else:
@@ -246,7 +246,9 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
         for x in offsets:
             start_f = int(sr*x)
             color.INFO('INFO',
-                       'computing embedding for offset {}'.format(start_f))
+                       'computing embedding for offset {}; '
+                       'this may take a while'.format(start_f))
+
             emb, utils.sess = get_embed(input_wav=wavdata[start_f:], sr=sr,
                                         sess=utils.sess)
             embs.append(emb)
@@ -325,7 +327,7 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
     if probs.shape[-1] == 1:
         probs = _binary_probs_to_multiclass(probs)
 
-    # print(probs) # DEBUG
+    print(probs)
     if algorithm == 'threshold':
         n, t = params['n'], params['t']
         labels = [np.argmax(timechunk) for timechunk in probs]
@@ -365,9 +367,9 @@ def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
         try:
             decoded[alg] = decode_sequence(probs=preds, algorithm=alg)
         except NotImplementedError:
-            color.INFO('FUTURE', 'WIP; "{}" not yet implemented'.format(alg))
+            color.INFO('FUTURE', 'WIP; {} not yet implemented'.format(alg))
 
     decoded['timestamp'] = [int(i*(.96e3/precision))
                             for i, _ in enumerate(preds)]
 
-    return decoded, preds
+    return decoded
