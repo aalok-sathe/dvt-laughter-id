@@ -19,6 +19,7 @@ from glob import glob
 from collections import defaultdict
 from scipy.io import wavfile
 import numpy as np
+import pomegranate as pmgt
 from progressbar import progressbar
 from pathlib import Path
 
@@ -297,6 +298,10 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
           HMM: this method will use a hidden Markov model with underlying
                states that are the same as surface states (the two state spaces
                for hidden and observed are equivalent)
+               requires a params to be passed as dict(c=DiscreteDistribution)
+               where c is a class (label) and DiscreteDistribution is an
+               instance of emission probabilities created using `pomegranate`,
+               for each such class
         - 'threshold'
           window and threshold method: this is simple heuristic-based method
           that will observe windows of length n, and if the average probability
@@ -343,6 +348,16 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
 
     if algorithm == 'hmm':
         raise NotImplementedError
+
+        hidden_states = [*range(probs.shape[-1])]
+        default = {0: pmgt.DiscreteDistribution({'0' : 0.8, '1' : 0.2}),
+                   1: pmgt.DiscreteDistribution({'0' : 0.1, '1' : 0.9})}
+
+        states = []
+        model = pmgt.HiddenMarkovModel('laugh-decoder')
+        for c in hidden_states:
+            state = pmgt.State(params.get(c, default(c)), name=str(c))
+            states += [state]
 
     else:
         # color.INFO('FUTURE', 'WIP; not yet implemented')
