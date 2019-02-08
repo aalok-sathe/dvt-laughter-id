@@ -264,10 +264,7 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
         pred = model.predict(x=item.reshape(1, -1))
         preds.append(pred)
 
-    # howmany = len(preds)
-
     return np.vstack(preds)
-
     # color.INFO('FUTURE', 'WIP; not yet implemented')
     # raise NotImplementedError
 
@@ -357,9 +354,20 @@ def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
     name of an episode, and does the heavylifting in loading the wav data,
     detecting the sampling rate, assigning labels, and so on.
     ---
-        episode: standard episode name in these scheme (friends-s%%-e%%)
+        episode: episode name in the standard naming scheme (friends-s%%-e%%)
         model: an instance of Keras BaseModel class that supports model.predict
                in order to assign multiclass/binary probabilities to data
+        precision: the higher, the more precise (time-wise), and the slower it
+                   takes to compute initially
+        algorithms: a list of algorithms to use for scoring. results from using
+                    all of the specified algorithms are returned
+        params: dict; params specific to the algorithms requested. e.g., for
+                threshold, n (window len) and t (threshold) may be supplied
+
+        return: (decoded, preds), a tuple of dict with dict['algorithm'] storing
+                the assigned labels according to 'algorithm', and preds storing
+                the raw output from model.predict(), should the parent method
+                need it for anything
     '''
 
     sr, wavdata = wavfile.read('../wav/{}.wav'.format(episode))
