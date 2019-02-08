@@ -255,7 +255,7 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
         np.savez_compressed(archivepath, embs=np.array(embs))
 
     color.INFO('INFO', 'unpacking offset embeddings into single list')
-    sequence = [*sum(zip(*embs), ())] if precision > 1 else np.vstack(embs) 
+    sequence = [*sum(zip(*embs), ())] if precision > 1 else np.vstack(embs)
 
     color.INFO('INFO', 'making predictions')
     preds = []
@@ -372,4 +372,4 @@ def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
     decoded['timestamp'] = [int(i*(.96e3/precision))
                             for i, _ in enumerate(preds)]
 
-    return decoded
+    return decoded, preds
