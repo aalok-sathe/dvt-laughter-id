@@ -282,7 +282,8 @@ def _binary_probs_to_multiclass(binary_probs=None):
     return np.array(multi).reshape(-1, 2)
 
 
-def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
+def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8),
+                    verbose=True):
     '''
     Once a model outputs probabilities for some sequence of data, that
     data shall be passed to this method. This method will use various
@@ -297,11 +298,12 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
         - 'hmm'
           HMM: this method will use a hidden Markov model with underlying
                states that are the same as surface states (the two state spaces
-               for hidden and observed are equivalent)
+               for hidden and observed are equivalent).
+               uses Viterbi to decode the underlying state sequence.
                requires a params to be passed as dict(c=DiscreteDistribution)
                where c is a class (label) and DiscreteDistribution is an
                instance of emission probabilities created using `pomegranate`,
-               for each such class
+               for each such class c (0, 1, 2, ...)
         - 'threshold'
           window and threshold method: this is simple heuristic-based method
           that will observe windows of length n, and if the average probability
@@ -346,26 +348,44 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
 
         return labels
 
-    if algorithm == 'hmm':
-        raise NotImplementedError
-
-        hidden_states = [*range(probs.shape[-1])]
-        default = {0: pmgt.DiscreteDistribution({'0' : 0.8, '1' : 0.2}),
-                   1: pmgt.DiscreteDistribution({'0' : 0.1, '1' : 0.9})}
+    elif algorithm == 'hmm' or algorithm == 'viterbi':
+        # define default emission probabilities
+        default = {0: pmgt.DiscreteDistribution({'0' : 0.7, '1' : 0.3}),
+                   1: pmgt.DiscreteDistribution({'0' : 0.2, '1' : 0.8})}
 
         states = []
-        model = pmgt.HiddenMarkovModel('laugh-decoder')
-        for c in hidden_states:
-            state = pmgt.State(params.get(c, default(c)), name=str(c))
+        for c in [*range(probs.shape[-1])]:
+            state = pmgt.State(params.get(c, default[c]), name=str(c))
             states += [state]
 
+        model = pmgt.HiddenMarkovModel('laugh-decoder')
+        model.add_states(states)
+
+        if 'transitions' in params:
+            model.add_transitions(params['transitions'])
+        else:
+            # start must always go to state 0
+            model.add_transitions([model.start, states[0]],
+                                  [states[0], model.end], [1., .1])
+            model.add_transitions([states[0], states[0], states[1], states[1]],
+                                  [states[0], states[1], states[0], states[1]],
+                                  [.5, .4, .2, .8])
+        model.bake()
+
+        # if verbose:
+        #     model.plot() # plotting is weird
+
+        labels = [str(np.argmax(entry)) for entry in probs]
+        labels = model.predict(sequence=labels, algorithm='viterbi')
+        return labels[1:-1]
+
     else:
-        # color.INFO('FUTURE', 'WIP; not yet implemented')
         raise NotImplementedError
 
 
 def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
-                      algorithms=['threshold'], params=dict(n=5, t=.8)):
+                      algorithms=['threshold'], params=dict(n=5, t=.8),
+                      verbose=True):
     '''
     This method is meant to tie together the two methods before it,
     `score_continuous_data`, and `decode_sequence`. The method takes in the
@@ -397,7 +417,7 @@ def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
         color.INFO('INFO', 'decoding labels to {} with {}'.format(episode, alg))
         try:
             decoded[alg] = decode_sequence(probs=preds, algorithm=alg,
-                                           params=params)
+                                           params=params, verbose=verbose)
         except NotImplementedError:
             color.INFO('FUTURE', 'WIP; {} not yet implemented'.format(alg))
 
