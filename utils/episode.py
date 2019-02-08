@@ -335,11 +335,14 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
             for c in range(probs.shape[-1]):
                 avg = np.average(probs[i:i+n], axis=0)[c]
                 if avg >= t:
-                    color.INFO('DEBUG',
-                               'found threshold window of {} at [{}:{}] for class {}'.format(avg, i, i+n, c))
+                    # color.INFO('DEBUG',
+                    #            'found threshold window of {} at [{}:{}] for class {}'.format(avg, i, i+n, c))
                     labels[i:i+n] = [c for _ in range(n)]
 
         return labels
+
+    if algorithm == 'hmm':
+        raise NotImplementedError
 
     else:
         # color.INFO('FUTURE', 'WIP; not yet implemented')
