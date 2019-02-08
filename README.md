@@ -8,10 +8,12 @@
     - ssh:
     ```bash
     git clone git@gitlab.com:aalok-sathe/dvt-laughter-id.git
+    cd dvt-laughter-id
     ```
     - https:
     ```bash
     git clone https://gitlab.com/aalok-sathe/dvt-laughter-id.git
+    cd dvt-laughter-id
     ```
 
 2. Get the dependencies
