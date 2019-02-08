@@ -280,8 +280,8 @@ def _binary_probs_to_multiclass(binary_probs=None):
     '''
     assert binary_probs.shape[-1] == 1, 'badly shaped binary probabilities'
     color.INFO('INFO', 'converting binary probs array to multiclass')
-    multi = [[1-x, x] for x in binary_probs]
-    return np.vstack(multi)
+    multi = [np.array([1-x, x]) for x in binary_probs]
+    return np.array(multi).reshape(-1, 2)
 
 
 def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
@@ -332,13 +332,14 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8)):
         n, t = params['n'], params['t']
         labels = [np.argmax(timechunk) for timechunk in probs]
 
-        for i in range(len(probs)-n):
+        for i in range(len(probs)-n+1):
+            # print(np.average(probs[i:i+n], axis=0)[0],
+            #       np.average(probs[i:i+n], axis=0)[1])
             for c in range(probs.shape[-1]):
-                if np.average(probs[i:i+n][c]) >= t:
+                avg = np.average(probs[i:i+n], axis=0)[c]
+                if avg >= t:
                     color.INFO('DEBUG',
-                               'found threshold window of {} at [{}:{}] for \
-                                class {}'.format(np.average(probs[i:i+n][c]),
-                                                 i, i+n, c))
+                               'found threshold window of {} at [{}:{}] for class {}'.format(avg, i, i+n, c))
                     labels[i:i+n] = [c for _ in range(n)]
 
         return labels
@@ -369,7 +370,8 @@ def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
     for alg in algorithms:
         color.INFO('INFO', 'decoding labels to {} with {}'.format(episode, alg))
         try:
-            decoded[alg] = decode_sequence(probs=preds, algorithm=alg)
+            decoded[alg] = decode_sequence(probs=preds, algorithm=alg,
+                                           params=params)
         except NotImplementedError:
             color.INFO('FUTURE', 'WIP; {} not yet implemented'.format(alg))
 
