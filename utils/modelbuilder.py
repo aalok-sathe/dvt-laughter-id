@@ -15,17 +15,26 @@ from keras.callbacks import ModelCheckpoint
 from keras.utils import normalize
 
 
+def _compile_binary(model=None, params=dict(optimizer='rmsprop')):
+    '''
+    standalone method to just compile a binary classification model
+    helps with brevity in other methods
+    ---
+        model: instance of Keras BaseModel (or Model)
+    '''
+    model.compile(optimizer=params['optimizer'], loss='binary_crossentropy',
+                  metrics=['binary_accuracy'])
+    return model
+
+
 def build_laugh_model(*args, **params):
     '''
     builds a standard laughter ID model with either the supplied, or otherwise
     predetermined optimum parameters.
     possible parameters:
     '''
-    # defaults = dict(dense0=14, drop0=.5, dense1=9, drop1=.2, act='relu',
-    #                optimizer='rmsprop')
-    defaults = dict(dense0=16, drop0=.4, dense1=8, drop1=.4, act='relu',
+    defaults = dict(dense0=14, drop0=.5, dense1=9, drop1=.2, act='relu',
                     optimizer='rmsprop')
-
     for key in defaults.keys():
         if key not in params:
             params[key] = defaults[key]
@@ -54,8 +63,7 @@ def build_laugh_model(*args, **params):
     layer = Dense(1, activation='sigmoid', name='out')(layer)
 
     model = Model(inputs=[inp], outputs=[layer])
-    model.compile(optimizer=params['optimizer'], loss='binary_crossentropy',
-                  metrics=['binary_accuracy'])
+    model = _compile_binary(model, params)
 
     if params.get('verbose', True):
         model.summary()
