@@ -21,6 +21,7 @@ from scipy.io import wavfile
 import numpy as np
 import pomegranate as pmgt
 from progressbar import progressbar
+from sklearn.preprocessing import normalize
 from pathlib import Path
 
 
