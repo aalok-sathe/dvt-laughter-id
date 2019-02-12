@@ -8,8 +8,9 @@ import color
 import episode
 import modelbuilder
 # library imports
-from progressbar import progressbar
 import numpy as np
+from argparse import ArgumentParser
+from progressbar import progressbar
 from pathlib import Path
 from cv2 import cv2
 from matplotlib import pyplot as plt
@@ -73,9 +74,9 @@ def overlay_frame(frame, height=None, width=None, preds=None, index=None,
 
     # before, after = preds[index-bufferlen:index], [index+1:index+bufferlen+1]
     this_pred = preds[index]
-    bars = [plt.bar(1, this_pred[0]*height, 100)] # [int(width/2)]
+    bars = [plt.bar(1, this_pred[0]*height, .1*width)] # [int(width/2)]
     for c in range(1, preds.shape[-1]):
-        bar = plt.bar(1, this_pred[c]*height, 100,
+        bar = plt.bar(1, this_pred[c]*height, .1*width,
                       bottom=this_pred[c-1]*height)
         bars.append(bar)
 
@@ -162,10 +163,11 @@ def overlay_episode(ep, model, precision=2):
     and uses the preds supplied to add overlay with those preds to the video
     '''
     videopath = Path('../video').joinpath(ep + '.mp4')
+    out = Path('../video').joinpath(ep + '_preds-overlay.mp4' + '.mp4')
     audiopath = Path('../wav').joinpath(ep + '.wav')
 
     cap, metadata = read_video(str(videopath))
-    writer = cv2.VideoWriter(ep + '_overlay.mp4',
+    writer = cv2.VideoWriter(str(out),
                              cv2.VideoWriter_fourcc(*'mp4v'),
                              metadata['fps'], (metadata['width'],
                                                metadata['height']))
@@ -177,9 +179,14 @@ def overlay_episode(ep, model, precision=2):
 
 
 if __name__ == '__main__':
+    arg_parser = ArgumentParser()
+    arg_parser.add_argument('-e', '--episode', type=str,
+                            help='title (in standard format) of the episode to'
+                                 ' add overlay to', default='friends-s03-e09')
+    config = arg_parser.parse_args()
 
     model = modelbuilder.build_laugh_model()
     model.load_weights(filepath='../laughter/task:per-season-split-ckpt.hdf5')
     model = modelbuilder._compile_binary(model)
 
-    overlay_episode('friends-s03-e09', model)
+    overlay_episode(config.episode, model)
