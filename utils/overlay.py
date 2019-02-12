@@ -185,6 +185,8 @@ if __name__ == '__main__':
     arg_parser.add_argument('-e', '--episode', type=str,
                             help='title (in standard format) of the episode to'
                                  ' add overlay to', default='friends-s03-e09')
+    arg_parser.add_argument('-o', '--overlay', type=int,
+                            help='execute overlay algorithm', default=1)
     arg_parser.add_argument('-s', '--subprocess', type=int,
                             help='execute subprocess call to run the command'
                                  ' from `add_audio`', default=1)
@@ -201,7 +203,8 @@ if __name__ == '__main__':
                                     '_preds-overlay_with-audio' + '.mp4')
 
     try:
-        overlay_episode(config.episode, model)
+        if config.overlay > 0:
+            overlay_episode(config.episode, model)
     except KeyboardInterrupt:
         pass
 
