@@ -174,8 +174,8 @@ def overlay_episode(ep, model, precision=2, skip=0):
     audiopath = Path('../wav').joinpath(ep + '.wav')
 
     cap, metadata = read_video(str(videopath))
-    writer = cv2.VideoWriter(str(out),
-                             cv2.VideoWriter_fourcc(*'mp4v'),
+    writer = cv2.VideoWriter(str(out), cv2.CAP_FFMPEG,
+                             cv2.VideoWriter_fourcc(*'MJPG'),
                              metadata['fps'], (metadata['width'],
                                                metadata['height']))
 
