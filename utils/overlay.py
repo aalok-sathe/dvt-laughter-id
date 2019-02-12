@@ -208,7 +208,7 @@ if __name__ == '__main__':
         pass
 
     if config.subprocess > 0:
-        cmd = 'ffmpeg -i {} -i {} -c:v libx264 -c:a libvorbis -shortest {}'
+        cmd = 'ffmpeg -i {} -i {} -c:v libx264 -c:a wav -shortest {}'
         cmd = cmd.format(str(inp), str(aud), str(out))
         try:
             subprocess.run(cmd.split(' '))
