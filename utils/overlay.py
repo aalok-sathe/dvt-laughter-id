@@ -103,7 +103,7 @@ def overlay_frame(frame, height=None, width=None, preds=None, index=None,
     return new_frame
 
 
-def _overlay_video(cap, metadata, preds, writer, precision=2):
+def _overlay_video(cap, metadata, preds, writer, precision=2, skip=0):
     '''
     the most basic video overlay method. needs a capture object, an array of
     predictions, and a precision level (with respect to samples per 0.96s
@@ -113,17 +113,19 @@ def _overlay_video(cap, metadata, preds, writer, precision=2):
     fps = metadata['fps']
     audioframe_dur = .96 / precision
 
-    for i in progressbar(range(metadata['frames']), redirect_stdout=1):
+    for i in progressbar(range(metadata['frames']-1), redirect_stdout=1):
         # color.INFO('DEBUG', 'processing frame {}'.format(i))
 
         time = i / fps
         predindex = time / audioframe_dur
         predindex = int(predindex)
-
+ 
         flag, frame = cap.read()
-        new_frame = overlay_frame(frame, height=metadata['height'],
-                                  width=metadata['width'], preds=preds,
-                                  index=predindex)
+
+        if i % (skip+1) == 0:
+            new_frame = overlay_frame(frame, height=metadata['height'],
+                                      width=metadata['width'], preds=preds,
+                                      index=predindex)
 
         writer.write(new_frame)
 
@@ -159,7 +161,7 @@ def overlay_video(videopath, audiopath, model, precision=2):
     #         break
 
 
-def overlay_episode(ep, model, precision=2):
+def overlay_episode(ep, model, precision=2, skip=0):
     '''
     helper method that loads a video corresponding to the episode supplied,
     and uses the preds supplied to add overlay with those preds to the video
@@ -177,7 +179,7 @@ def overlay_episode(ep, model, precision=2):
     _, preds = episode.detect_in_episode(ep, model, precision=2, algorithms=[])
     preds = episode._binary_probs_to_multiclass(preds)
 
-    _overlay_video(cap, metadata, preds, writer, precision)
+    _overlay_video(cap, metadata, preds, writer, precision, skip)
 
 
 if __name__ == '__main__':
@@ -187,9 +189,11 @@ if __name__ == '__main__':
                                  ' add overlay to', default='friends-s03-e09')
     arg_parser.add_argument('-o', '--overlay', type=int,
                             help='execute overlay algorithm', default=1)
-    arg_parser.add_argument('-s', '--subprocess', type=int,
+    arg_parser.add_argument('-a', '--audio', type=int,
                             help='execute subprocess call to run the command'
                                  ' from `add_audio`', default=1)
+    arg_parser.add_argument('-s', '--skip', type=int,
+                            help='skip these many frames for speedup', default=0)
 
     config = arg_parser.parse_args()
 
@@ -203,12 +207,12 @@ if __name__ == '__main__':
             model = modelbuilder.build_laugh_model()
             model.load_weights(filepath='../laughter/task:per-season-split-ckpt.hdf5')
             model = modelbuilder._compile_binary(model)
-            overlay_episode(config.episode, model)
+            overlay_episode(config.episode, model, skip=config.skip)
     except KeyboardInterrupt:
         pass
 
-    if config.subprocess > 0:
-        cmd = 'ffmpeg -i {} -i {} -c:v libx264 -c:a wav -shortest {}'
+    if config.audio > 0: # -vcodec copy -acodec copy
+        cmd = 'ffmpeg -i {} -i {} -c:v libx264 -c:a libvorbis -shortest {}'
         cmd = cmd.format(str(inp), str(aud), str(out))
         try:
             subprocess.run(cmd.split(' '))
