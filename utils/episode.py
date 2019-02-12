@@ -53,7 +53,7 @@ def load_annotations(episode, task=None):
     return patches
 
 
-def convertref(value=None, sr=None, to='audio'):
+def _convertref(value=None, sr=None, to='audio'):
     '''
     converts a timestamp to audio frame index or vice versa, according to
     specified sampling rate of audio and direction requested
@@ -143,7 +143,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
             for start, end in progressbar(laughs, redirect_stdout=False):
                 if existsflag: break
                 if start == end: continue
-                start_f, end_f = convertref(start, sr), convertref(end, sr)
+                start_f, end_f = _convertref(start, sr), _convertref(end, sr)
                 # print(start_f, end_f)
                 try:
                     this_x,
@@ -166,11 +166,12 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
         if not existsflag:
             for start, end in progressbar(nolaughs, redirect_stdout=True):
                 if start == end: continue
-                start_f, end_f = convertref(start, sr), convertref(end, sr)
+                start_f, end_f = _convertref(start, sr), _convertref(end, sr)
                 # print(start_f, end_f)
                 try:
-                    this_x, utils.sess = get_embed(input_wav=wavdata[start_f:end_f],
-                                         sr=sr, sess=utils.sess)
+                    this_x, utils.sess = get_embed(input_wav=\
+                                                   wavdata[start_f:end_f],
+                                                   sr=sr, sess=utils.sess)
                     if preserve_length:
                         this_X += [this_x]
                         this_Y += [0]
@@ -205,7 +206,8 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
 
 
 def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
-                          archive='../data/archive', episode='friends-s03-e09'):
+                          archive='../data/archive', name='.noname',
+                          norm=False):
     '''
     Given wavdata of an audio signal and its sampling rate, this method
     will generate more embeddings for the same data than are typically needed
@@ -237,13 +239,14 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
     offsets = np.arange(0, 0.96, 0.96/precision)
 
     archivepath = Path(archive)
-    archivepath = archivepath.joinpath(episode + '_emb_prec=%d.npz' % precision)
+    archivepath = archivepath.joinpath(name + '_emb_prec=%d.npz' % precision)
 
     if archivepath.exists():
         color.INFO('INFO', 'loading archived data from {}'.format(archivepath))
         data = np.load(archivepath)
         embs = data['embs'] #if precision > 1 else data['embs']
     else:
+        color.INFO('INFO', 'no archived data found at {}'.format(archivepath))
         embs = []
         for x in offsets:
             start_f = int(sr*x)
@@ -253,6 +256,8 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
 
             emb, utils.sess = get_embed(input_wav=wavdata[start_f:], sr=sr,
                                         sess=utils.sess)
+            if norm:
+                emb = normalize(np.stack(emb, axis=0))
             embs.append(emb)
         np.savez_compressed(archivepath, embs=np.array(embs))
 
@@ -384,16 +389,16 @@ def decode_sequence(probs=None, algorithm='threshold', params=dict(n=5, t=.8),
         raise NotImplementedError
 
 
-def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
-                      algorithms=['threshold'], params=dict(n=5, t=.8),
-                      verbose=True):
+def _detect_in_audio(wavdata, sr, model=None, precision=3,
+                     algorithms=['threshold'], params=dict(n=5, t=.8),
+                     verbose=True, norm=False, name='.noname'):
     '''
-    This method is meant to tie together the two methods before it,
-    `score_continuous_data`, and `decode_sequence`. The method takes in the
-    name of an episode, and does the heavylifting in loading the wav data,
-    detecting the sampling rate, assigning labels, and so on.
+    This internal method is meant to tie together the two methods before it,
+    `score_continuous_data`, and `decode_sequence`. The method takes in raw
+    wave audio data, and does the heavylifting in detecting the sampling rate,
+    assigning labels, and so on.
     ---
-        episode: episode name in the standard naming scheme (friends-s%%-e%%)
+        wavdata:
         model: an instance of Keras BaseModel class that supports model.predict
                in order to assign multiclass/binary probabilities to data
         precision: the higher, the more precise (time-wise), and the slower it
@@ -408,14 +413,12 @@ def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
                 the raw output from model.predict(), should the parent method
                 need it for anything
     '''
-
-    sr, wavdata = wavfile.read('../wav/{}.wav'.format(episode))
     preds = score_continuous_data(wavdata=wavdata, sr=sr, model=model,
-                                  precision=precision, episode=episode)
+                                  precision=precision, norm=norm, name=name)
 
     decoded = defaultdict(list)
     for alg in algorithms:
-        color.INFO('INFO', 'decoding labels to {} with {}'.format(episode, alg))
+        color.INFO('INFO', 'decoding labels with {}'.format(alg))
         try:
             decoded[alg] = decode_sequence(probs=preds, algorithm=alg,
                                            params=params, verbose=verbose)
@@ -426,3 +429,22 @@ def detect_in_episode(episode='friends-s02-e03', model=None, precision=3,
                             for i, _ in enumerate(preds)]
 
     return decoded, preds
+
+
+def detect_in_episode(episode, model, precision=3, algorithms=['threshold'],
+                      params=dict(n=5, t=.8), verbose=True, norm=False):
+    '''
+    wrapper for `_detect_in_audio` but tailored to episodes for this scheme of
+    data
+    ---
+        episode: episode name in the standard naming scheme (friends-s%%-e%%)
+        --
+        for docstrings of the rest of the arguments, see `_detect_in_audio`
+    '''
+    sr, wavdata = wavfile.read('../wav/{}.wav'.format(episode))
+    dec, preds = _detect_in_audio(wavdata=wavdata, sr=sr, model=model,
+                                  precision=precision, algorithms=algorithms,
+                                  params=params, verbose=verbose, norm=norm,
+                                  name=episode)
+
+    return dec, preds
