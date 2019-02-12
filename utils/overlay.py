@@ -184,6 +184,8 @@ def overlay_episode(ep, model, precision=2, skip=0):
 
     _overlay_video(cap, metadata, preds, writer, precision, skip)
 
+    writer.release()
+
 
 if __name__ == '__main__':
     arg_parser = ArgumentParser()
@@ -216,6 +218,7 @@ if __name__ == '__main__':
 
     if config.audio > 0: # -vcodec copy -acodec copy
         cmd = 'ffmpeg -i {} -i {} -c:v libx264 -c:a libvorbis -shortest {}'
+        # cmd = 'ffmpeg -i {} -i {} -c:v mpeg4 -c:a libvorbis -shortest {}'
         cmd = cmd.format(str(inp), str(aud), str(out))
         try:
             subprocess.run(cmd.split(' '))
