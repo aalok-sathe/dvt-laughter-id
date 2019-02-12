@@ -113,19 +113,22 @@ def _overlay_video(cap, metadata, preds, writer, precision=2, skip=0):
     fps = metadata['fps']
     audioframe_dur = .96 / precision
 
+    color.INFO('INFO', 'applying overlay to individual frames')
     for i in progressbar(range(metadata['frames']-1), redirect_stdout=1):
-        # color.INFO('DEBUG', 'processing frame {}'.format(i))
 
         time = i / fps
         predindex = time / audioframe_dur
         predindex = int(predindex)
- 
+
         flag, frame = cap.read()
 
         if i % (skip+1) == 0:
-            new_frame = overlay_frame(frame, height=metadata['height'],
-                                      width=metadata['width'], preds=preds,
-                                      index=predindex)
+            try:
+                new_frame = overlay_frame(frame, height=metadata['height'],
+                                          width=metadata['width'], preds=preds,
+                                          index=predindex)
+            except IndexError:
+                break
 
         writer.write(new_frame)
 
