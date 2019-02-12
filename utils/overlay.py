@@ -1,13 +1,15 @@
 #! /bin/env/ python3
 '''
 this file houses function(s) to manipulate video files to add overlays with
-predicted probability values from some model
+predicted probability values from some model.
+must be executed inside utils if executed as __main__
 '''
 # local imports
 import color
 import episode
 import modelbuilder
 # library imports
+import subprocess
 import numpy as np
 from argparse import ArgumentParser
 from progressbar import progressbar
@@ -183,10 +185,30 @@ if __name__ == '__main__':
     arg_parser.add_argument('-e', '--episode', type=str,
                             help='title (in standard format) of the episode to'
                                  ' add overlay to', default='friends-s03-e09')
+    arg_parser.add_argument('-s', '--subprocess', type=int,
+                            help='execute subprocess call to run the command'
+                                 ' from `add_audio`', default=1)
+
     config = arg_parser.parse_args()
 
     model = modelbuilder.build_laugh_model()
     model.load_weights(filepath='../laughter/task:per-season-split-ckpt.hdf5')
     model = modelbuilder._compile_binary(model)
 
-    overlay_episode(config.episode, model)
+    inp = Path('../video').joinpath(config.episode + '_preds-overlay' + '.mp4')
+    aud = Path('../wav').joinpath(config.episode + '.wav')
+    out = Path('../video').joinpath(config.episode + \
+                                    '_preds-overlay_with-audio' + '.mp4')
+
+    try:
+        overlay_episode(config.episode, model)
+    except KeyboardInterrupt:
+        pass
+
+    if config.subprocess > 0:
+        cmd = 'ffmpeg -i {} -i {} -c:v libx264 -c:a libvorbis -shortest {}'
+        cmd = cmd.format(str(inp), str(aud), str(out))
+        try:
+            subprocess.run(cmd.split(' '))
+        except TypeError:
+            color.INFO('DEBUG', 'catching a TypeError for some reason?')
