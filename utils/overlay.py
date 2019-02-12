@@ -172,7 +172,7 @@ def overlay_episode(ep, model, precision=2):
                              metadata['fps'], (metadata['width'],
                                                metadata['height']))
 
-    _, preds = episode.detect_in_episode(ep, model, precision=2)
+    _, preds = episode.detect_in_episode(ep, model, precision=2, algorithms=[])
     preds = episode._binary_probs_to_multiclass(preds)
 
     _overlay_video(cap, metadata, preds, writer, precision)
