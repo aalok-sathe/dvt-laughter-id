@@ -193,10 +193,6 @@ if __name__ == '__main__':
 
     config = arg_parser.parse_args()
 
-    model = modelbuilder.build_laugh_model()
-    model.load_weights(filepath='../laughter/task:per-season-split-ckpt.hdf5')
-    model = modelbuilder._compile_binary(model)
-
     inp = Path('../video').joinpath(config.episode + '_preds-overlay' + '.mp4')
     aud = Path('../wav').joinpath(config.episode + '.wav')
     out = Path('../video').joinpath(config.episode + \
@@ -204,6 +200,9 @@ if __name__ == '__main__':
 
     try:
         if config.overlay > 0:
+            model = modelbuilder.build_laugh_model()
+            model.load_weights(filepath='../laughter/task:per-season-split-ckpt.hdf5')
+            model = modelbuilder._compile_binary(model)
             overlay_episode(config.episode, model)
     except KeyboardInterrupt:
         pass
