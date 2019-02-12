@@ -163,7 +163,7 @@ def overlay_episode(ep, model, precision=2):
     and uses the preds supplied to add overlay with those preds to the video
     '''
     videopath = Path('../video').joinpath(ep + '.mp4')
-    out = Path('../video').joinpath(ep + '_preds-overlay.mp4' + '.mp4')
+    out = Path('../video').joinpath(ep + '_preds-overlay' + '.mp4')
     audiopath = Path('../wav').joinpath(ep + '.wav')
 
     cap, metadata = read_video(str(videopath))
