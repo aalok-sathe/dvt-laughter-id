@@ -1,9 +1,7 @@
 #! /bin/env/ python3
 '''
 this file is written with the intention to simplify the keras model-building
-process and make it cleaner.
-it remains to be seen how useful it will be.
-keeping it in the repo for now.
+process and make it cleaner for our specific task
 '''
 # local imports
 import color
@@ -15,7 +13,7 @@ from keras.callbacks import ModelCheckpoint
 from keras.utils import normalize
 
 
-def _compile_binary(model=None, params=dict(optimizer='rmsprop')):
+def _compile_binary(model, params=dict(optimizer='rmsprop')):
     '''
     standalone method to just compile a binary classification model
     helps with brevity in other methods
