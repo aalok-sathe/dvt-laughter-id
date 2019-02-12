@@ -114,7 +114,7 @@ def _overlay_video(cap, metadata, preds, writer, precision=2, skip=0):
     audioframe_dur = .96 / precision
 
     color.INFO('INFO', 'applying overlay to individual frames')
-    for i in progressbar(range(metadata['frames']-1), redirect_stdout=1):
+    for i in progressbar(range(metadata['frames']), redirect_stdout=1):
 
         time = i / fps
         predindex = time / audioframe_dur
