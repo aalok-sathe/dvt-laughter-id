@@ -15,6 +15,7 @@ import utils
 from vggishutils import get_embed
 # stdlib and package imports
 import yaml
+import itertools
 from glob import glob
 from collections import defaultdict
 from scipy.io import wavfile
@@ -51,6 +52,40 @@ def load_annotations(episode, task=None):
                 patches[attr].append((start, end))
 
     return patches
+
+
+def _get_y_true_label(time, annot=None):
+    '''
+    given a timestamp 'time' and an annotations list, determines the y_true
+    score for 'time' according to annotations. will return a value [0., 1.]
+    depending on how much of the window (time, time+.96) has an overlap with
+    the annotated patch. it is assumed that no annotation window would be
+    smaller than .96s
+    '''
+    for s, e in annot:
+        # if either endpoint of chunk lies in a patch
+        if s <= time < e or s <= (time+.96e3) < e:
+            # if chunk is entirely in some patch
+            if s <= time < e and s <= (time+.96e3) < e:
+                return 1.
+            # if the end of a chunk is in a patch
+            elif time < s and s <= time+.96e3 < e:
+                return (time+.96e3-s) / (.96e3)
+            # if the start of a chunk is in a patch
+            else:
+                return (e-time) / (.96e3)
+    else: # didn't find any patch the chunk could be in
+        return 0.
+
+
+# TODO
+def get_y_true_labels(episode, precision=2):
+    '''
+    given an episode name in the standard naming scheme, gets a list of y_true
+    scores for a particular precision value
+    '''
+    raise NotImplementedError
+    annot = load_annotations(episode)
 
 
 def _convertref(value=None, sr=None, to='audio'):
@@ -252,7 +287,7 @@ def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
             start_f = int(sr*x)
             color.INFO('INFO',
                        'computing embedding for offset {}; '
-                       'this may take a while'.format(start_f))
+                       'this may take a while'.format(x))
 
             emb, utils.sess = get_embed(input_wav=wavdata[start_f:], sr=sr,
                                         sess=utils.sess)
@@ -448,3 +483,24 @@ def detect_in_episode(episode, model, precision=3, algorithms=['threshold'],
                                   name=episode)
 
     return dec, preds
+
+
+def discrete_to_chunks(sequence=None):
+    '''
+    certain methods may give out discrete 0,1,... labels over time distributed
+    data. this method will take such discrete labels and return a list of
+    patches of each label in a dictionary with keys that are labels. labels
+    must be hashable; in most cases labels would be integers denoting classes
+    '''
+    try:
+        groups = [(k, len([*g])) for k, g in itertools.groupby(sequence)]
+    except TypeError:
+        color.ERR('ERR', 'please provide a valid discrete labels sequence')
+
+    patches = defaultdict(list)
+    offset = 0
+    for k, wid in groups:
+        patches[k] += [(offset, offset+wid)]
+        offset += wid
+
+    return patches
