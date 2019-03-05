@@ -13,12 +13,14 @@ existence of:
 import color
 import utils
 from vggishutils import get_embed
+import soundutils
 # stdlib and package imports
 import yaml
 import itertools
 from glob import glob
 from collections import defaultdict
 from scipy.io import wavfile
+from scipy import signal
 import numpy as np
 import pomegranate as pmgt
 from progressbar import progressbar
@@ -52,6 +54,17 @@ def load_annotations(episode, task=None):
                 patches[attr].append((start, end))
 
     return patches
+
+
+def get_patches(ep, task='laughter'):
+    '''
+    returns patches based on annotation file of the form positive and negative
+    '''
+    patches = load_annotations(ep)
+    laughs = patches[task]
+    nolaughs = [(e1, s2) for (s1, e1), (s2, e2) in zip(laughs, laughs[1:])
+                if s2-e1 > 1e3]
+    return laughs, nolaughs
 
 
 def _get_y_true_label(time, annot=None):
@@ -90,6 +103,9 @@ def get_y_true_labels(episode, precision=2):
 
 def _convertref(value=None, sr=None, to='audio'):
     '''
+    COMPATIBILITY: this method is kept here for compatibility; but will be
+                   deprecated in the future. please refer to soundutils.py
+    ---
     converts a timestamp to audio frame index or vice versa, according to
     specified sampling rate of audio and direction requested
     ---
@@ -98,22 +114,12 @@ def _convertref(value=None, sr=None, to='audio'):
         to: whether to convert to audio ('audio') or to time ('time')
             where the time is in milliseconds
     '''
-    try:
-        if to == 'audio':
-            seconds = value * 1e-3
-            frame = seconds * sr
-            return int(frame)
-        else:
-            seconds = value / sr
-            millisec = seconds * 1e3
-            return int(millisec)
-    except (ValueError, TypeError) as e:
-        color.ERR('ERR', 'please check your arguments')
-        raise
+    # color.INFO('WARNING', _convertref.__doc__)
+    return soundutils._convertref(value, sr, to)
 
 
-def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
-             archive='../data/archive', task='laughter'):
+def _get_data_vggish(which_episodes=None, preserve_length=False,
+                     archive='../data/archive', task='laughter'):
     '''
     gets embeddings data for a list of episodes.
     as a list, expects basenames of the episodes without any attribute or
@@ -149,10 +155,7 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
     for ep in which_episodes:
         color.INFO('INFO', 'processing {}'.format(ep))
 
-        patches = load_annotations(ep)
-        laughs = patches[task]
-        nolaughs = [(e1, s2) for (s1, e1), (s2, e2) in zip(laughs, laughs[1:])
-                    if s2-e1 > 1e3]
+        laughs, nolaughs = get_patches(ep, task)
 
         existsflag = False
         archivepath = Path(archive)
@@ -238,6 +241,29 @@ def get_data(which_episodes=None, use_vggish=True, preserve_length=False,
     else:
         return np.vstack(X), np.array(Y, dtype=int), np.array(refs,
                                                               dtype=object)
+
+
+def _get_data_spectro(which_episodes, archive='../data/archive',
+                      task='laughter'):
+    '''
+    gets spectrograph data for an episode
+    '''
+    patches = get_patches(ep, task)
+    sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
+    raise NotImplementedError
+
+
+def get_data(which_episodes=None, preserve_length=False, backend='vggish',
+             archive='../data/archive', task='laughter'):
+    '''
+    wrapper method for various implementations of get_data. default: VGGish.
+    for a specific method, pass the backed kwarg one of {vggish, spectro}
+    '''
+    if backend == 'vggish':
+        return _get_data_vggish(which_episodes, preserve_length, archive, task)
+
+    if backend == 'spectro':
+        return _get_data_spectro(which_episodes, archive, task)
 
 
 def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
