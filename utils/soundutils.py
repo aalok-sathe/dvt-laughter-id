@@ -45,7 +45,7 @@ def _convertref(value=None, sr=None, to='audio'):
         raise
 
 
-def get_data_spectro(wavdata, sr, windowlen=100):
+def get_data_spectro(wavdata, sr, windowlen=100, fn=lambda x: np.mean(x, axis=1)):
     '''
     uses scipy.signal to extract spectrogram of wavdata, and returns (n_freq,)
     shaped arrays with values averaged over windowlen milliseconds.
@@ -56,11 +56,21 @@ def get_data_spectro(wavdata, sr, windowlen=100):
     '''
     f, t, Sxx = signal.spectrogram(wavdata, sr)
     logSxx = np.log10(1+Sxx)
+    numsec = len(wavdata) / sr
+    specsr = len(t) / numsec
+    stepsize = int(specsr * windowlen / 1e3)
+
+    color.INFO('DEBUG',
+               'shapes: f={}, t={}, logSxx={}'.format(f.shape, t.shape,
+                                                      logSxx.shape))
 
     samples = []
-    for i in range(0, logSxx.shape[1], windowlen):
-        window = logSxx[:,i:i+windowlen]
-        meanSxx = np.mean(window, axis=1)
-        samples.append(meanSxx)
+    for i in range(0, int(numsec*1e3), windowlen):
+        # if logSxx.shape[1] - i <= stepsize: continue
+        start = int(i / numsec / 1e3 * logSxx.shape[1])
+        window = logSxx[:, start:start+stepsize]
+        samples.append(fn(window))
 
-    return np.vstack(samples)
+    if len(samples):
+        return f, np.arange(0, int(numsec*1e3), windowlen), np.vstack(samples)
+    return None
