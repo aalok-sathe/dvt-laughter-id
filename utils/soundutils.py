@@ -61,9 +61,9 @@ def get_data_spectro(wavdata, sr, windowlen=100,
     specsr = len(t) / numsec
     stepsize = int(specsr * windowlen / 1e3)
 
-    color.INFO('DEBUG',
-               'shapes: f={}, t={}, logSxx={}'.format(f.shape, t.shape,
-                                                      logSxx.shape))
+    # color.INFO('DEBUG',
+    #            'shapes: f={}, t={}, logSxx={}'.format(f.shape, t.shape,
+    #                                                  logSxx.shape))
 
     samples = []
     for i in range(0, int(numsec*1e3), windowlen):

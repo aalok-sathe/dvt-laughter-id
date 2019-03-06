@@ -8,7 +8,8 @@ import color
 # library imports
 import keras.backend as K
 from keras.models import Sequential, Model, model_from_yaml
-from keras.layers import Dense, Dropout, LeakyReLU, Flatten, LSTM, Input
+from keras.layers import Dense, Dropout, LeakyReLU, Flatten, LSTM, Input, \
+                         Conv1D, MaxPooling1D
 from keras.callbacks import ModelCheckpoint
 from keras.utils import normalize
 
@@ -25,7 +26,54 @@ def _compile_binary(model, params=dict(optimizer='rmsprop')):
     return model
 
 
-def build_laugh_model(*args, **params):
+def build_conv_model(*args, **params):
+    '''
+    builds a standard laughter ID model with either the supplied, or otherwise
+    predetermined optimum parameters.
+    possible parameters:
+    '''
+    defaults = dict(inp=129, conv0=3, conv0_kernel=16, dense0=16, drop0=.5,
+                    act='relu', drop1=.5, optimizer='rmsprop')
+    for key in defaults.keys():
+        if key not in params:
+            params[key] = defaults[key]
+
+    if 0 < len(args) < len(defaults)-1:
+        color.ERR('ERR', 'some positional arguments supplied but not enough '
+                         'arguments supplied (needed: %d)' % len(defaults))
+        raise ValueError
+    elif len(args) == len(defaults)-1:
+        keys = ['dense0', 'drop0', 'act', 'optimizer']
+        for i, thing in enumerate(args):
+            params[keys[i]] = thing
+
+    # in
+    inp = Input(shape=(params['inp'], 1), name='in0')
+
+    # stack 0a
+    layer = Conv1D(params['conv0'], params['conv0_kernel'],
+                   activation=params['act'], name='conv0')(inp)
+    layer = MaxPooling1D(params['conv0_kernel'], name='max0')(layer)
+    layer = Flatten(name='flat0')(layer)
+    layer = Dropout(params['drop0'], name='dr0')(layer)
+
+    # stack 0b
+    layer = Dense(params['dense0'], activation=params['act'], name='d0')(layer)
+    layer = Dropout(params['drop1'], name='dr1')(layer)
+
+    # out
+    layer = Dense(1, activation='sigmoid', name='out')(layer)
+
+    model = Model(inputs=[inp], outputs=[layer])
+    model = _compile_binary(model, params)
+
+    if params.get('verbose', True):
+        model.summary()
+
+    return model
+
+
+def build_dense_model(*args, **params):
     '''
     builds a standard laughter ID model with either the supplied, or otherwise
     predetermined optimum parameters.
@@ -67,6 +115,16 @@ def build_laugh_model(*args, **params):
         model.summary()
 
     return model
+
+
+def build_laugh_model(*args, **params):
+    '''
+    '''
+    color.INFO('WARNING', 'this function is left here for compatibility. '
+                          'please use `build_dense_model` in your methods. '
+                          'this function will be deprecated in the future.')
+    return build_dense_model(*args, **params)
+    # raise DeprecationWarning
 
 
 def build_dense_layers(layer_sizes=[None], drop=0):

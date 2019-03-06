@@ -243,27 +243,62 @@ def _get_data_vggish(which_episodes=None, preserve_length=False,
                                                               dtype=object)
 
 
-def _get_data_spectro(which_episodes, archive='../data/archive',
-                      task='laughter'):
+def _get_data_spectro(which_episodes, preserve_length=False,
+                      archive='../data/archive', task='laughter',
+                      windowlen=100):
     '''
-    gets spectrograph data for an episode
+    gets spectrograph data for an episode by calling
+    soundutils.get_data_spectro on chunks, repeatedly
     '''
-    patches = get_patches(ep, task)
-    sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
-    raise NotImplementedError
+    if type(which_episodes) == str:
+        which_episodes = [which_episodes]
+        
+    X, Y, refs = [], [], []
+    for ep in which_episodes:
+        laughs, nolaughs = get_patches(ep, task)
+        sr, wavdata = wavfile.read('../wav/{}.wav'.format(ep))
+  
+
+        for label in {0, 1}:
+            
+            color.INFO('INFO', 
+                       'processing data for ep={}; label={}'.format(ep, label))
+            
+            for start, end in progressbar([nolaughs, laughs][label], 
+                                          redirect_stdout=True):
+                if start+windowlen >= end: continue
+                start_f, end_f = _convertref(start, sr), _convertref(end, sr)
+            
+                f, t, samples = soundutils.get_data_spectro(wavdata[start_f:end_f], 
+                                                            sr, windowlen=windowlen)
+                if preserve_length:
+                    X.append(samples)
+                    Y.append(label)
+                    refs.append((ep, start, end))
+                else:
+                    X += [s for s in samples]
+                    Y += [label for _ in samples]
+                    refs += [(ep, start, end) for _ in samples]
+    
+    X = np.vstack(X)#.reshape(*X.shape, 1)
+    Y = np.vstack(Y)
+    return X, Y, refs
 
 
 def get_data(which_episodes=None, preserve_length=False, backend='vggish',
-             archive='../data/archive', task='laughter'):
+             archive='../data/archive', task='laughter', windowlen=100):
     '''
     wrapper method for various implementations of get_data. default: VGGish.
-    for a specific method, pass the backed kwarg one of {vggish, spectro}
+    for a specific method, pass the backed kwarg one of {vggish, spectro}.
+    the kwarg 'windowlen' has no effect with VGGish, but is passed to 
+    the spectrogram based implementation
     '''
     if backend == 'vggish':
         return _get_data_vggish(which_episodes, preserve_length, archive, task)
 
     if backend == 'spectro':
-        return _get_data_spectro(which_episodes, archive, task)
+        return _get_data_spectro(which_episodes, preserve_length, archive, task,
+                                 windowlen)
 
 
 def score_continuous_data(wavdata=None, sr=None, model=None, precision=3, L=1,
