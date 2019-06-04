@@ -1,0 +1,168 @@
+\documentclass[12pt]{article}
+\usepackage[margin=.97in]{geometry}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+
+\title{\vspace{-3em}
+        Automatic methods of detecting laughter in television 
+       {\itshape sitcoms} for cultural analytics: a comparative study}
+%\author{Aalok Sathe, Taylor Arnold\\{University of Richmond, VA, USA}}
+\date{}
+\pagenumbering{arabic}
+
+\begin{document}
+\maketitle
+
+\vspace{-5.6em}
+\begin{center}
+    \bfseries
+    Abstract
+\end{center}
+\vskip-.5em
+Television offers a readily available digital window into understanding modern
+culture and recent history. The trends and customs in society are easily
+reflected in television series and revealed on analyzing the digital media
+content.  However, manually analyzing several thousands of hours of digital
+media is a dauntingly time-consuming, and hence impossible task. %Therefore, it
+%is important to build computational methods to process and organize
+%information in digital media that can be more easily analyzed and understood.  
+Whereas people have previously worked on analyzing the visual event-space of
+television series \cite{arnold}, computational methods of analyzing the
+auditory event-space need more exploration. Other than identifying different
+kinds of sounds such as music, outdoors, a particular location within the show,
+etc., in general, an important part of the auditory event-space would be to
+look at human-produced sounds in contexts of discourse, and relative to each
+other. This would include accumulating statistics on metrics such as when
+speech occurs, who speaks what amounts of dialogues, which characters tend to
+speak more, and in response to which other characters, who laughs at whom, and
+whose dialogues get the most elicited laughter from the audience as indicated
+by canned laughter or laugh track.% Further specific
+%analyses may include looking at the intonation of speech to understand which
+%characters tend to speak in an assertive manner, and which ones do not, and
+%their trends regarding co-occurrence with another character in the same scene.
+%Whereas statistics on events such as who speaks when, and how much, can be
+%computed to an extent from close captions, the captions almost never include
+%annotations of ambient auditory events such as  synthetically added laughter
+%(canned or otherwise), the manner or perceived intention of someone's speaking,
+%theme music, and background noises.
+
+\setlength{\intextsep}{1pt}
+\begin{wrapfigure}{l}{.3\linewidth}
+    \begin{center}
+        \includegraphics[width=\linewidth]{overlay-eg}
+    \end{center}
+    \vspace{-2em}
+    \caption{
+           Using a transfer deep learning model %and a visualization program from our software
+           to add a live overlay of laugh track predictions.% to a scene from Friends.
+           A label of `1' (blue) corresponds to the model's prediction of laugh track being present.
+           The height of the color bars represents likelihood.
+        }
+\end{wrapfigure}
+
+In this study, we look at an interesting audio event that is valuable for
+cultural analytics \cite{manovich2001language}---laughter---and explore ways to
+computationally model it, particularly in TV {\itshape sitcoms} (situational
+comedies), comparing their relative advantages and performance on a subset of
+episodes from the popular American TV series {\itshape Friends}.  We make use
+of a new dataset for sound events---Google's AudioSet---an existing dataset for
+competitive machine learning---Kaggle FreeSound---and combine these with
+different methods of making inference: training model on an external dataset to
+make predictions in our domain; using a pre-trained model (VGGish) \cite{45611}
+and performing transfer learning on our domain-specific data to make
+predictions in our domain; and training a model from scratch on just our data
+without using any external dataset using a method based on spectrographs of
+sound. We compare the relative performances of these combinations on Friends.
+Finally, we introduce a suite of open-source tools for clean and intuitive
+audio event-space (not limited to laughter) analysis and visualization of
+television and general audio-visual media, and make them available for usage
+and further development.
+
+Past studies try to identify canned laughter \cite{affective} in audio-visual
+media. Here, we use Friends since it involves a laugh track.
+We pick several episodes from \textit{Friends}, and hand-annotate them
+with help from human annotators and the \texttt{PyMediaAnnotator} tool.
+%for annotating
+%reocurring event sequences in the audio-visual event-space of digital media.
+
+Overview of methods.
+%\begin{enumerate}
+    %\item
+    \textbf{1.}
+    Deep Convolutional Network. %: VGGish.
+    We train a deep neural network classifier trained on top of Google's VGGish
+        pre-computed embeddings for various labels related to laughter: `adult laughter',
+    `laughter', `chuckle', etc. We compare the relative performance of a dense model,
+        and a recurrent neural network (RNN) model.
+    Google's AudioSet is a recent dataset that attempts to document a large number
+        of audio events with hand-annotated labels.
+    %\item
+    \textbf{2.}
+    Deep transfer learning on top of VGGish.
+    By scraping the topmost layers of VGGish off, it is possible to compute
+        128-dimensional representation of audio, i.e., embeddings. 
+        In one experiment,
+        we compute embeddings for the Kaggle FreeSound data for labels related to laughter,
+        train a classifier to identify laughter, and use that model to predict on episodes
+        of Friends.
+        In another experiment, we train a classifier on hand-annotated Friends data
+        in the form of VGGish-embedder outputted embeddings, and use
+        the same model to make predictions on Friends.
+            %\item
+        \textbf{3.}
+        Logistic regression on spectrographs.
+        We compute the time-frequency spectrograph of the audio track and train
+        a classifier on top of the spectrograph observations. We make use of an
+        L1-penalty `lasso' logistic regression model on the spectrographs.
+%\end{enumerate}
+
+We find that using deep transfer learning with additional training on domain-specific data
+produces the best results, giving peak accuracy of $91.1\%$ in cross-season validation, and
+$\approx 93\%$ in same-season validation.
+We find that models trained just on Google's AudioSet and Kaggle FreeSound do not generalize
+to the domain of sitcoms easily, without any additional learning on top. A vanilla VGGish
+model trained on AudioSet data produces a peak accuract of $\approx 75\%$ with the right
+parameters.
+A simple logistic regression model trained on spectrographs and hand-annotated data produces
+a peak performance of $82\%$ on Friends.
+
+\setlength{\intextsep}{1pt}
+   \begin{wrapfigure}{}{.75\textwidth}
+        \vspace{-1em}
+    \begin{center}
+        \includegraphics[width=\linewidth]{egpreds}
+    \end{center}
+       \vspace{-2em}
+    \caption{
+        Visualization of predictions using VGGish transfer learning.
+    }
+       \vskip.2em
+        %\vspace{-1em}
+\end{wrapfigure}
+
+Whereas a VGGish-transfer model gives higher accuracy, the model architecture requires a
+trade-off in temporal resolution, providing a label for chunks of 0.96 seconds at once. On the
+other hand, the spectrographs method allows for much finer resolution. To get the best of both
+the worlds, we provide software to perform sequence decoding using simple heuristics and using
+hidden Markov models to obtain a useful sequence of labels when actually predicting on an entire
+episode.
+
+Our findings suggest the need for more domain specific training methods, or better generalization
+from large annotated datasets to smaller tasks---even a
+relatively small variation in the manner the sound is produced in can cause a disparity in 
+predictive power of a model.
+The results are encouraging for the use of computational methods for cultural analytics to include
+sound as a mainstream subject rather than just visual data.
+
+%We make the software available at [link redacted] for collaborative use and further software development,
+%and release it under an open-source license (GPL 3.0).
+\vspace{-.5em}
+\renewcommand\refname{\small References}
+{
+    \footnotesize
+    \bibliographystyle{ieeetr}%ieeetr}
+    %\nocite{*}
+    \bibliography{refs}
+}
+
+\end{document}
